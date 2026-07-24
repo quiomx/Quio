@@ -40,3 +40,15 @@ if(stage && !reduceMotion && window.matchMedia('(pointer:fine)').matches){
   });
   stage.addEventListener('pointerleave',()=>stage.style.transform='');
 }
+
+
+document.querySelectorAll('[data-calendly-open]').forEach(btn=>{
+ btn.addEventListener('click',e=>{
+  e.preventDefault();
+  if(window.Calendly){
+    Calendly.initPopupWidget({url:'https://calendly.com/quio/revision'});
+  } else {
+    window.open('https://calendly.com/quio/revision','_blank','noopener');
+  }
+ });
+});
