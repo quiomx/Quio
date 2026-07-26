@@ -1,12 +1,21 @@
-# Quio V2
+# Quio v10 — Copy claro
 
-Landing page de Quio, desarrollada únicamente con HTML5, CSS3 y JavaScript Vanilla. Comunica con claridad sus cuatro soluciones: Perfil de Negocio en Google, sistemas para facilitar reseñas, sitios web y automatización de citas y atención por WhatsApp.
+Versión construida directamente sobre el proyecto Quio v9 actual.
 
-## Publicación en GitHub Pages
+## Archivos
+- `index.html`
+- `styles.css`
+- `script.js`
 
-1. Sube `index.html`, `styles.css` y `script.js` a la raíz del repositorio.
-2. En GitHub, abre **Settings → Pages**.
-3. Selecciona la rama principal y la carpeta raíz.
-4. Verifica que el enlace de Calendly corresponda a `https://calendly.com/quio/revision`.
+## Cambios
+- Copy principal más directo y fácil de entender.
+- Nueva sección de revisión gratuita con cinco preguntas sencillas.
+- Explicación clara del reporte que recibe el negocio.
+- Niveles Esencial, Intermedio y Avanzado con matriz visual animada.
+- Placas NFC y QR incluidas en Quio Esencial.
+- Página web incluida en Quio Intermedio.
+- Agenda de citas en línea y WhatsApp incluidos en Quio Avanzado.
+- Se conservaron el diseño, animaciones, ilustraciones y configuración de Calendly del proyecto original.
 
-No requiere compilación, dependencias ni frameworks.
+## Uso
+Abre `index.html` o sube los tres archivos principales a la raíz del repositorio de GitHub Pages.

@@ -52,3 +52,15 @@ document.querySelectorAll('[data-calendly-open]').forEach(btn=>{
   }
  });
 });
+
+
+// Animación de la ruta de niveles cuando entra en pantalla.
+const levelsFlow=document.querySelector('[data-levels-flow]');
+if(levelsFlow){
+  const levelsObserver=new IntersectionObserver(entries=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){entry.target.classList.add('is-visible');levelsObserver.unobserve(entry.target);}
+    });
+  },{threshold:.25});
+  levelsObserver.observe(levelsFlow);
+}
