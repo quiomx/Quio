@@ -1,4 +1,4 @@
-# Quio v10 — Copy claro
+# Quio v17
 
 Versión construida directamente sobre el proyecto Quio v9 actual.
 
