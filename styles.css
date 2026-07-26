@@ -97,3 +97,6 @@
 @keyframes flowBounce{0%,100%{transform:translateY(0);opacity:.65}50%{transform:translateY(7px);opacity:1}}@keyframes levelReveal{from{opacity:0;transform:translateY(22px)}to{opacity:1}}
 @media(max-width:1050px){.review-questions{grid-template-columns:repeat(2,1fr)}.review-question:last-child{grid-column:1/-1}.level-grid{grid-template-columns:1fr}.level-card>p:not(.mini){min-height:0}.level-card.recommended{transform:none}}
 @media(max-width:720px){.review-questions{grid-template-columns:1fr}.review-question:last-child{grid-column:auto}.review-question{min-height:auto}.review-deliverable{grid-template-columns:1fr;padding:28px 22px}.review-deliverable ul{grid-template-columns:1fr}.review-deliverable>p{grid-column:auto}.levels-flow{padding:22px 14px}.recommended-label{position:static;display:inline-block;margin-bottom:15px}}
+
+
+.levels-example-title{margin:0 0 18px;text-align:center;font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-muted,#8f94a8)}
