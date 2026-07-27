@@ -1,0 +1,272 @@
+:root{--ink:#0b1020;--ink-2:#151c31;--muted:#657086;--line:#e3e7ee;--bg:#f5f7fa;--card:#fff;--mint:#7de2d1;--mint-dark:#1a8f7e;--blue:#5267e8;--green:#2d9b68;--amber:#d99522;--red:#d65757;--shadow:0 18px 50px rgba(18,29,54,.08);--radius:20px;--radius-sm:12px}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.5}.skip-link{position:absolute;left:-999px}.skip-link:focus{left:16px;top:16px;z-index:99;background:#fff;padding:10px;border-radius:8px}.app-shell{display:grid;grid-template-columns:260px 1fr;min-height:100vh}.sidebar{position:sticky;top:0;height:100vh;background:var(--ink);color:#fff;padding:28px 20px;display:flex;flex-direction:column}.brand{display:flex;align-items:center;gap:12px;padding:0 8px 24px}.brand-mark{width:42px;height:42px;border-radius:13px;background:var(--mint);color:var(--ink);display:grid;place-items:center;font-weight:800;font-size:22px}.brand strong,.brand span{display:block}.brand span{font-size:12px;color:#aab3c5}.side-nav{display:grid;gap:6px}.nav-item{border:0;background:transparent;color:#bfc7d6;text-align:left;padding:12px 14px;border-radius:12px;font:inherit;cursor:pointer;display:flex;gap:12px}.nav-item:hover,.nav-item.active{background:#1a2238;color:#fff}.nav-item.active{box-shadow:inset 3px 0 var(--mint)}.sidebar-note{margin-top:auto;background:#141c31;border:1px solid #273149;border-radius:16px;padding:16px;font-size:12px;color:#c9d0dc}.sidebar-note p{margin:0}.dot{width:8px;height:8px;border-radius:50%;background:var(--mint);display:inline-block;margin-bottom:8px}.sidebar-version{font-size:11px;color:#748098;padding:0 8px}.main-content{padding:0 34px 48px;min-width:0}.topbar{height:104px;display:flex;align-items:center;justify-content:space-between}.topbar h1{margin:3px 0 0;font-size:28px}.eyebrow{font-size:11px;letter-spacing:.13em;font-weight:800;color:#8490a6;margin:0}.top-actions,.hero-actions,.wizard-actions,.action-right,.toolbar{display:flex;align-items:center;gap:10px}.btn,.icon-btn,.text-btn{font:inherit;cursor:pointer}.btn{border-radius:11px;padding:11px 16px;border:1px solid transparent;font-weight:700}.btn-primary{background:var(--ink);color:#fff}.btn-primary:hover{background:#1a2238}.btn-secondary{background:#fff;border-color:var(--line);color:var(--ink)}.btn-light{background:#fff;color:var(--ink)}.btn-ghost-light{background:transparent;border-color:rgba(255,255,255,.3);color:#fff}.icon-btn{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:#fff;font-weight:800}.text-btn{border:0;background:none;color:var(--blue);font-weight:700}.view{display:none}.view.active{display:block}.hero-panel{background:linear-gradient(125deg,#0b1020,#263354);color:#fff;border-radius:26px;padding:42px;display:grid;grid-template-columns:1.5fr .6fr;gap:30px;box-shadow:var(--shadow);overflow:hidden;position:relative}.hero-panel:after{content:"";position:absolute;width:360px;height:360px;border:1px solid rgba(125,226,209,.18);border-radius:50%;right:-140px;top:-100px}.hero-panel h2{font-size:38px;line-height:1.12;max-width:760px;margin:18px 0}.hero-panel p{color:#cad2df;max-width:660px}.pill,.badge{display:inline-block;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.06em}.pill{padding:7px 10px;background:rgba(125,226,209,.14);color:var(--mint)}.pill.dark{background:#eaf2f0;color:#156f61}.badge{padding:5px 9px;background:#eef1f6;color:#657086}.hero-score{align-self:center;justify-self:end;width:180px;height:180px;border:1px solid rgba(255,255,255,.18);border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(255,255,255,.05);backdrop-filter:blur(8px);z-index:1}.hero-score span,.hero-score small{color:#aeb9cb}.hero-score strong{font-size:50px}.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:20px 0}.kpi-card,.panel{background:var(--card);border:1px solid var(--line);box-shadow:0 8px 30px rgba(20,31,55,.04)}.kpi-card{padding:20px;border-radius:16px}.kpi-card span,.kpi-card small{display:block;color:var(--muted)}.kpi-card strong{display:block;font-size:27px;margin:6px 0}.content-grid{display:grid;gap:16px}.content-grid.two-thirds{grid-template-columns:2fr 1fr}.panel{border-radius:var(--radius);padding:22px}.panel-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}.panel h3{margin:4px 0;font-size:19px}canvas{max-width:100%;height:auto}.empty-chart{text-align:center;color:var(--muted);padding:55px 10px;border:1px dashed var(--line);border-radius:12px}.legend{display:grid;gap:8px;margin-top:12px}.legend-row{display:flex;justify-content:space-between;font-size:13px}.recent-panel{margin-top:16px}.record-list{display:grid}.record{display:grid;grid-template-columns:1fr auto auto;gap:20px;align-items:center;padding:14px 0;border-top:1px solid var(--line)}.record:first-child{border-top:0}.record-title strong,.record-title span{display:block}.record-title span{font-size:13px;color:var(--muted)}.score-chip{min-width:52px;text-align:center;padding:8px;border-radius:10px;font-weight:800}.level-critical{background:#fae9e9;color:#a43c3c}.level-basic{background:#fff3df;color:#a36b11}.level-functional{background:#e8f0ff;color:#3857b2}.level-strong{background:#e3f5ed;color:#257651}.wizard-shell{display:grid;grid-template-columns:230px 1fr;gap:20px}.wizard-rail,.wizard-main{background:#fff;border:1px solid var(--line);border-radius:20px}.wizard-rail{padding:22px;height:max-content;position:sticky;top:122px}.step-rail{list-style:none;padding:0;margin:18px 0;display:grid;gap:6px}.step-rail li{padding:10px;border-radius:10px;font-size:13px;color:var(--muted)}.step-rail li.active{background:#eef1f6;color:var(--ink);font-weight:700}.step-rail li.done:before{content:"✓";color:var(--green);margin-right:7px}.save-status{font-size:12px;color:var(--muted);display:flex;gap:7px;align-items:center}.save-status span:first-child{width:8px;height:8px;border-radius:50%;background:var(--green)}.wizard-main{padding:28px;min-height:660px}.wizard-progress{height:5px;background:#edf0f4;border-radius:5px;overflow:hidden}.wizard-progress span{display:block;height:100%;background:var(--mint-dark);width:0;transition:width .3s}.wizard-copy{max-width:760px}.wizard-copy h2{font-size:31px;margin:18px 0 8px}.wizard-copy>p{color:var(--muted)}.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin:26px 0}.field{display:grid;gap:7px}.field.full{grid-column:1/-1}.field label{font-size:13px;font-weight:700}.field input,.field select,.field textarea,.search-box input,.toolbar select{width:100%;padding:12px 13px;border:1px solid var(--line);border-radius:10px;background:#fff;font:inherit}.field input:focus,.field select:focus,.field textarea:focus{outline:3px solid rgba(82,103,232,.12);border-color:var(--blue)}.question-list{display:grid;gap:14px;margin:24px 0}.question-card{border:1px solid var(--line);border-radius:16px;padding:18px}.question-top{display:flex;justify-content:space-between;gap:20px}.question-top h3{font-size:16px;margin:0}.question-top p{font-size:12px;color:var(--muted);margin:5px 0}.weight{white-space:nowrap;font-size:12px;font-weight:800;color:#758097}.answer-group{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:14px}.answer-btn{border:1px solid var(--line);background:#fff;padding:10px;border-radius:10px;font-weight:700;cursor:pointer}.answer-btn[data-value="yes"].selected{background:#e3f5ed;border-color:#8bcbb1;color:#226b4a}.answer-btn[data-value="partial"].selected{background:#fff2da;border-color:#efc36e;color:#8d5e0e}.answer-btn[data-value="no"].selected{background:#fae6e6;border-color:#e9a1a1;color:#963737}.helper{font-size:12px;color:var(--muted);margin-top:10px}.wizard-actions{justify-content:space-between;border-top:1px solid var(--line);padding-top:20px;margin-top:28px}.result-header{display:grid;grid-template-columns:180px 1fr;gap:24px;align-items:center;margin:24px 0}.score-ring{width:170px;height:170px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--mint-dark) calc(var(--score)*1%),#edf0f4 0);position:relative}.score-ring:before{content:"";position:absolute;inset:13px;background:#fff;border-radius:50%}.score-ring div{position:relative;text-align:center}.score-ring strong{font-size:44px}.score-ring span{display:block;font-size:12px;color:var(--muted)}.result-summary h2{font-size:30px;margin:8px 0}.result-summary p{color:var(--muted)}.pillar-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.pillar-card{border:1px solid var(--line);border-radius:14px;padding:14px}.pillar-card strong{font-size:24px;display:block}.pillar-card span{font-size:12px;color:var(--muted)}.insight-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:18px 0}.insight-box{border:1px solid var(--line);border-radius:16px;padding:18px}.insight-box h3{margin-top:0}.insight-box ul{padding-left:18px}.timeline{display:grid;gap:10px}.timeline-item{display:grid;grid-template-columns:34px 1fr;gap:12px}.timeline-num{width:30px;height:30px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-weight:800}.recommendation{background:#f1f7f5;border:1px solid #cae5de;border-radius:16px;padding:18px}.toolbar{margin-bottom:16px}.search-box{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:11px;padding-left:12px;flex:1}.search-box input{border:0}.table-panel{padding:0}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:15px 17px;border-bottom:1px solid var(--line);font-size:13px}th{font-size:11px;letter-spacing:.08em;color:var(--muted);background:#fafbfc}.methodology-intro{max-width:860px;padding:25px 0}.methodology-intro h2{font-size:36px;line-height:1.15}.methodology-intro p{font-size:17px;color:var(--muted)}.methodology-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.method-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px}.method-card .num{color:var(--mint-dark);font-weight:800}.method-card h3{margin:8px 0}.method-card p{color:var(--muted);font-size:14px}.method-card strong{font-size:25px}.rules-panel{margin-top:16px}.rules-list{display:grid;grid-template-columns:1fr 1fr;gap:12px}.rule{padding:15px;background:#f8f9fb;border-radius:12px}.dialog{border:0;border-radius:22px;padding:28px;max-width:720px;box-shadow:var(--shadow)}.dialog::backdrop{background:rgba(5,10,22,.55)}.dialog-close{float:right;border:0;background:none;font-size:26px;cursor:pointer}.help-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.help-grid div{padding:16px;background:#f6f8fa;border-radius:14px}.help-grid p{font-size:13px;color:var(--muted)}.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:12px 16px;border-radius:12px;opacity:0;transform:translateY(12px);pointer-events:none;transition:.25s}.toast.show{opacity:1;transform:none}
+@media(max-width:1050px){.app-shell{grid-template-columns:82px 1fr}.sidebar{padding:20px 12px}.brand div:not(.brand-mark),.nav-item:not(.active) span+*,.sidebar-note,.sidebar-version{display:none}.nav-item{justify-content:center}.content-grid.two-thirds,.pillar-grid{grid-template-columns:1fr 1fr}.kpi-grid{grid-template-columns:1fr 1fr}.methodology-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:760px){.app-shell{display:block}.sidebar{position:static;height:auto;flex-direction:row;align-items:center;overflow:auto}.brand{padding:0 12px}.side-nav{display:flex}.main-content{padding:0 16px 32px}.topbar{height:auto;padding:18px 0}.topbar .eyebrow{display:none}.topbar h1{font-size:21px}.top-actions .icon-btn{display:none}.hero-panel{grid-template-columns:1fr;padding:28px}.hero-panel h2{font-size:30px}.hero-score{display:none}.kpi-grid,.content-grid.two-thirds,.wizard-shell,.form-grid,.insight-grid,.methodology-grid,.rules-list{grid-template-columns:1fr}.wizard-rail{display:none}.wizard-main{padding:19px}.pillar-grid{grid-template-columns:1fr 1fr}.result-header{grid-template-columns:1fr}.score-ring{margin:auto}.toolbar{align-items:stretch;flex-direction:column}.answer-group{grid-template-columns:1fr}.help-grid{grid-template-columns:1fr}}
+@media print{.sidebar,.topbar,.wizard-actions,.toolbar,.no-print{display:none!important}.app-shell{display:block}.main-content{padding:0}.panel{box-shadow:none;break-inside:avoid}}
+
+/* Mejoras 4.1: modo consultor, lenguaje claro, condicionales y resultados */
+.meeting-note{display:flex;gap:12px;align-items:center;background:#eef8f6;border:1px solid #cbe8e1;border-radius:14px;padding:14px 16px;margin-top:22px}.meeting-note strong{white-space:nowrap}.meeting-note span{font-size:13px;color:var(--muted)}
+.asset-field small{color:var(--muted);font-size:12px}.scope-box{background:#fafbfc}.not-applicable{margin:28px 0;padding:28px;border:1px dashed #b9c5d4;border-radius:16px;background:#fafcfe}.not-applicable p{color:var(--muted);margin-bottom:0}
+.answer-btn{display:flex;justify-content:center;align-items:center;gap:8px}.signal{width:10px;height:10px;border-radius:50%;display:inline-block}.signal.yes{background:var(--green)}.signal.partial{background:var(--amber)}.signal.no{background:var(--red)}
+.result-actions,.bottom-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.result-charts{display:grid;grid-template-columns:1.65fr .8fr;gap:16px;margin:18px 0}.chart-card{border:1px solid var(--line);border-radius:16px;padding:18px;background:#fff}.chart-card h3{margin:4px 0 14px}.traffic-grid{display:grid;gap:12px}.traffic-item{display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line);padding:9px 0}.traffic-item:last-child{border-bottom:0}.traffic-item strong,.traffic-item small{display:block}.traffic-item small{color:var(--muted)}.traffic-light{width:13px;height:13px;border-radius:50%;box-shadow:0 0 0 5px #f3f5f7}.traffic-light.red{background:var(--red)}.traffic-light.amber{background:var(--amber)}.traffic-light.green{background:var(--green)}
+.pillar-card small{display:block;color:var(--muted)}.mini-bar{height:5px;background:#edf0f4;border-radius:6px;margin-top:11px;overflow:hidden}.mini-bar i{display:block;height:100%;background:var(--mint-dark)}.strength-box{border-top:4px solid var(--green)}.opportunity-box{border-top:4px solid var(--amber)}.insight-box li{margin-bottom:7px}.recommendation-label,.phase-chip{display:inline-block;font-size:11px;font-weight:800;border-radius:999px;background:#e4f1ee;color:#126b5d;padding:5px 9px}.recommendation h3{font-size:26px;margin:9px 0}.plan-panel{margin-top:16px}.timeline-item strong{display:block;margin-top:6px}.bottom-actions{border-top:1px solid var(--line);padding-top:22px;margin-top:22px}.wizard-main{scroll-margin-top:18px}
+.presentation-mode .sidebar,.presentation-mode .topbar,.presentation-mode .wizard-rail,.presentation-mode .wizard-actions{display:none!important}.presentation-mode .app-shell{display:block}.presentation-mode .main-content{padding:24px;max-width:1400px;margin:auto}.presentation-mode .wizard-shell{display:block}.presentation-mode .wizard-main{border:0;box-shadow:none;padding:10px}.presentation-mode .wizard-progress,.presentation-mode .wizard-copy>p{display:none}.presentation-mode .result-actions{display:none}
+@media(max-width:900px){.result-charts{grid-template-columns:1fr}.meeting-note{align-items:flex-start;flex-direction:column}}
+
+/* Quio 5.0 RC — módulo enfocado exclusivamente en revisiones */
+.compact-hero{min-height:300px}.compact-hero h2{max-width:720px}.section-intro{margin-bottom:24px}.section-intro h2{margin:.25rem 0 .5rem}.section-intro p:last-child{color:var(--muted);max-width:760px}.record-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}.action-btn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:9px;padding:7px 10px;font:inherit;font-size:.82rem;font-weight:700;cursor:pointer}.action-btn:hover{background:var(--soft)}.action-btn.danger{color:#a43b3b}.action-btn.danger:hover{background:#fff1f1;border-color:#efc1c1}.record-actions.compact .action-btn{padding:6px 8px}.table-sub{display:block;color:var(--muted);margin-top:3px}.empty-state{padding:38px;text-align:center;border:1px dashed var(--line);border-radius:16px;display:grid;gap:8px;justify-items:center}.empty-state span{color:var(--muted);margin-bottom:8px}.empty-table{padding:28px;text-align:center;color:var(--muted)}
+@media(max-width:900px){.record{align-items:flex-start;flex-wrap:wrap}.record-actions{width:100%;justify-content:flex-start}.record-actions.compact .action-btn{flex:1}.table-wrap table{min-width:980px}}
+
+
+
+/* Validación clara y accesible */
+.validation-summary{margin:0 0 22px;padding:16px 18px;border:1px solid #e49a9a;border-left:5px solid #c83d3d;border-radius:14px;background:#fff1f1;color:#7f1d1d;box-shadow:0 8px 24px rgba(171,39,39,.08)}
+.validation-summary:focus{outline:3px solid rgba(200,61,61,.2);outline-offset:3px}
+.validation-summary strong{display:block;font-size:15px}.validation-summary p{margin:3px 0 7px}.validation-summary ul{margin:0;padding-left:20px;font-size:13px}
+.field-error label{color:#9d2525}.field-error input,.field-error select,.field-error textarea{border-color:#c83d3d!important;background:#fff8f8;box-shadow:0 0 0 3px rgba(200,61,61,.10)}
+.field-error input:focus,.field-error select:focus,.field-error textarea:focus{outline:3px solid rgba(200,61,61,.17);border-color:#a92727!important}
+.question-error{border-color:#c83d3d!important;background:#fff8f8;box-shadow:0 0 0 3px rgba(200,61,61,.08)}
+.inline-error{display:block;margin:2px 0 0!important;color:#a92727!important;font-size:12px!important;font-weight:700}
+.toast.error{background:#a92727;color:#fff;box-shadow:0 12px 30px rgba(123,24,24,.28)}
+
+
+/* Ajustes 4.3.3: tarjeta limpia y ayuda contextual */
+.hero-panel:after{display:none}
+.hero-score{width:220px;height:auto;min-height:190px;border-radius:22px;padding:26px 24px;align-items:flex-start;justify-content:center;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);backdrop-filter:none}
+.hero-score-icon{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:rgba(125,226,209,.16);color:var(--mint);font-size:20px;margin-bottom:16px}
+.hero-score strong{font-size:54px;line-height:1;margin-bottom:10px}
+.hero-score span{font-size:15px;font-weight:700;color:#fff}
+.hero-score small{margin-top:4px;color:#aeb9cb}
+.sidebar-note{transition:background .2s,border-color .2s}.sidebar-note strong{display:inline-block;margin-bottom:3px;color:#fff}
+
+
+/* Quio 5.2 — barra lateral contraíble */
+
+
+/* Sidebar premium colapsable */
+.app-shell{transition:grid-template-columns .24s cubic-bezier(.2,.8,.2,1)}
+.sidebar,.main-content,.brand-copy,.nav-item,.sidebar-note,.sidebar-version{transition:all .24s cubic-bezier(.2,.8,.2,1)}
+.brand{position:relative;min-height:52px}
+.sidebar-toggle{margin-left:auto;flex:0 0 auto;width:30px;height:30px;border:1px solid rgba(255,255,255,.13);border-radius:9px;display:grid;place-items:center;background:rgba(255,255,255,.055);color:#aeb9cb;cursor:pointer;transition:background .18s,border-color .18s,color .18s,transform .18s}
+.sidebar-toggle svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round}
+.sidebar-toggle:hover{background:rgba(125,226,209,.11);border-color:rgba(125,226,209,.28);color:var(--mint)}
+.sidebar-toggle:active{transform:scale(.95)}
+.sidebar-toggle:focus-visible{outline:3px solid rgba(125,226,209,.32);outline-offset:3px}
+.sidebar-toggle .toggle-arrow{transition:transform .24s cubic-bezier(.2,.8,.2,1);transform-origin:13.5px 12px}
+.app-shell.sidebar-collapsed{grid-template-columns:82px 1fr}
+.sidebar-collapsed .sidebar{padding-inline:12px}
+.sidebar-collapsed .brand{padding:0 0 24px;justify-content:center;flex-direction:column;gap:10px}
+.sidebar-collapsed .brand-mark{width:40px;height:40px;border-radius:12px}
+.sidebar-collapsed .brand-copy,.sidebar-collapsed .sidebar-note,.sidebar-collapsed .sidebar-version{display:none}
+.sidebar-collapsed .sidebar-toggle{margin-left:0;width:32px;height:28px}
+.sidebar-collapsed .sidebar-toggle .toggle-arrow{transform:rotate(180deg)}
+.sidebar-collapsed .nav-item{justify-content:center;gap:0;padding-inline:10px;white-space:nowrap;font-size:0}
+.sidebar-collapsed .nav-item span{font-size:19px}
+.sidebar-collapsed .nav-item.active{box-shadow:inset 3px 0 var(--mint)}
+@media(max-width:1050px) and (min-width:761px){.sidebar-toggle{display:none}.app-shell{grid-template-columns:82px 1fr}.brand-copy,.sidebar-note,.sidebar-version{display:none}.brand{justify-content:center;padding-inline:0}.nav-item{justify-content:center;font-size:0}.nav-item span{font-size:19px}}
+@media(max-width:760px){.sidebar-toggle{display:none}.app-shell.sidebar-collapsed{display:block}.sidebar-collapsed .brand-copy{display:block}.sidebar-collapsed .sidebar{padding:20px 12px}.sidebar-collapsed .brand{flex-direction:row;justify-content:flex-start;padding:0 12px}.sidebar-collapsed .nav-item{font-size:inherit}.sidebar-collapsed .nav-item span{font-size:inherit}}
+@media(prefers-reduced-motion:reduce){.app-shell,.sidebar,.main-content,.brand-copy,.nav-item,.sidebar-note,.sidebar-version,.sidebar-toggle,.sidebar-toggle .toggle-arrow{transition:none}}
+
+/* v5.4: menú visible por defecto y control evidente */
+.sidebar-toggle{width:auto;min-width:126px;height:36px;padding:0 11px;gap:8px;border-radius:10px;background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.18);color:#f4f7fb;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center}
+.sidebar-toggle:hover{background:rgba(125,226,209,.15);border-color:rgba(125,226,209,.42);color:#fff}
+.sidebar-toggle-label{display:inline-block;white-space:nowrap}
+.sidebar-collapsed .brand{flex-direction:column;align-items:center}
+.sidebar-collapsed .sidebar-toggle{width:42px;min-width:42px;height:36px;padding:0;margin-left:0}
+.sidebar-collapsed .sidebar-toggle-label{display:none}
+@media(max-width:1050px) and (min-width:761px){.sidebar-toggle{display:flex;width:42px;min-width:42px;padding:0}.sidebar-toggle-label{display:none}}
+@media(max-width:760px){.sidebar-toggle{display:none}}
+
+
+/* v5.5: control lateral compacto, sin texto y con icono de panel más evidente */
+.sidebar-toggle{width:38px;min-width:38px;height:38px;padding:0;gap:0;border-radius:10px;background:rgba(255,255,255,.075);border:1px solid rgba(255,255,255,.17);color:#dbe3ef;display:grid;place-items:center}
+.sidebar-toggle svg{width:21px;height:21px;stroke-width:1.8}
+.sidebar-toggle .sidebar-frame{stroke:currentColor}
+.sidebar-toggle .sidebar-divider{stroke:var(--mint)}
+.sidebar-toggle:hover{background:rgba(125,226,209,.14);border-color:rgba(125,226,209,.42);color:#fff;transform:translateY(-1px)}
+.sidebar-toggle:active{transform:translateY(0) scale(.96)}
+.sidebar-collapsed .sidebar-toggle{width:38px;min-width:38px;height:38px;padding:0;margin-left:0}
+.sidebar-collapsed .sidebar-toggle .toggle-arrow{transform:rotate(180deg);transform-origin:14.5px 12px}
+@media(max-width:1050px) and (min-width:761px){.sidebar-toggle{display:grid;width:38px;min-width:38px;padding:0}}
+@media(max-width:760px){.sidebar-toggle{display:none}}
+
+.summary-review-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:24px 0}.summary-review-item{display:flex;gap:14px;align-items:flex-start;padding:20px}.summary-review-item>span{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#e9f6f2;color:#147766;font-weight:800}.summary-review-item strong{display:block;margin-bottom:5px}.summary-review-item p{margin:0;color:var(--muted)}.traffic-light.neutral{background:#98a2b3}@media(max-width:700px){.summary-review-grid{grid-template-columns:1fr}}
+
+/* Quio 6.2: separación entre acciones incluidas y otros hallazgos */
+.future-panel{margin-top:20px;border:1px solid #e5e9ef;background:#fbfcfd}
+.future-list{margin:16px 0 0;padding-left:22px;display:grid;gap:10px;color:var(--text-secondary,#526071)}
+.future-list li{line-height:1.55}
+
+
+/* Quio 8.0 — hallazgos organizados por módulo */
+.findings-by-module{margin-top:18px}.section-heading{margin:0 0 16px;font-size:1.2rem}.module-findings{border:1px solid var(--border);border-radius:18px;padding:20px;margin-bottom:14px;background:#fff}.module-findings h3{margin:0 0 16px;font-size:1.05rem}.module-findings strong{display:block;margin-bottom:8px;font-size:.88rem}.module-good strong{color:#087f6d}.module-improve strong{color:#b4232d}.module-findings ul{margin:0;padding-left:20px}.module-findings li{margin:7px 0;line-height:1.45}.module-good+.module-improve{margin-top:18px;padding-top:16px;border-top:1px solid var(--border)}
+
+.pillar-card--unavailable{display:flex;flex-direction:column;justify-content:flex-start}.pillar-card--unavailable strong{margin-top:8px}.pillar-card--unavailable .mini-bar{display:none}
+
+
+/* Quio 14: lectura consultiva para activos inexistentes */
+.module-findings--absent{background:#fbfcfe;border-color:#dfe5ec}
+.module-state,.module-why,.module-action{padding:14px 16px;border-radius:12px;margin-top:10px}
+.module-state{background:#f4f6f9}
+.module-why{background:#fff8ec;border:1px solid #f0dfba}
+.module-action{background:#eefaf7;border:1px solid #bee5dc}
+.module-state p,.module-why p,.module-action p{margin:6px 0 0;color:#475369;line-height:1.55}
+.module-action strong{color:#087f70}
+
+/* Quio 15.0 — refinamiento visual */
+.findings-by-module--clean{margin-top:26px}.findings-by-module--clean>.module-findings:first-child{margin-top:0}.timeline-item{grid-template-columns:40px 38px 1fr!important;align-items:start}.timeline-icon{width:32px;height:32px;border-radius:10px;background:#edf9f6;border:1px solid #b7ded6;color:#147e70;display:grid;place-items:center;font-weight:800;font-size:12px;margin-top:2px}.module-findings--absent .module-state,.module-findings--absent .module-why,.module-findings--absent .module-action{position:relative;padding-left:54px}.module-findings--absent .module-state:before,.module-findings--absent .module-why:before,.module-findings--absent .module-action:before{position:absolute;left:14px;top:14px;width:28px;height:28px;border-radius:9px;background:#0b1020;color:#fff;display:grid;place-items:center;font-weight:800}.module-findings--absent .module-state:before{content:'E'}.module-findings--absent .module-why:before{content:'?'}.module-findings--absent .module-action:before{content:'Q'}
+
+
+/* Metodología uniforme 15.2: Estado actual → ¿Por qué importa? → Lo que hará Quio */
+.module-cases{display:grid;gap:14px;margin-top:16px}
+.module-good+.module-cases{margin-top:18px;padding-top:16px;border-top:1px solid var(--border)}
+.finding-case{display:grid;gap:8px;padding:12px;border:1px solid #e5e9f0;border-radius:14px;background:#fbfcfe}
+.finding-case .module-state,.finding-case .module-why,.finding-case .module-action{position:relative;padding-left:54px;margin-top:0}
+.finding-case .module-state:before,.finding-case .module-why:before,.finding-case .module-action:before{position:absolute;left:14px;top:14px;width:28px;height:28px;border-radius:9px;background:#0b1020;color:#fff;display:grid;place-items:center;font-weight:800}
+.finding-case .module-state:before{content:'E'}
+.finding-case .module-why:before{content:'?'}
+.finding-case .module-action:before{content:'Q'}
+
+.finding-case>h4,.module-findings--absent>h4{margin:0 0 2px;font-size:1rem;line-height:1.3;color:var(--ink);font-weight:800}.finding-case>h4{padding:2px 4px 4px}.module-findings--absent>h4{margin-top:-4px;margin-bottom:10px}
+
+/* Títulos visuales de hallazgos · 15.3.4 */
+.finding-title{display:flex;align-items:center;gap:10px;margin:0 0 4px!important;padding:4px 5px 8px!important;font-size:1rem;line-height:1.3;color:var(--ink);font-weight:800;border-bottom:1px solid #e8edf2}
+.finding-title-icon{width:34px;height:34px;flex:0 0 34px;border-radius:10px;display:grid;place-items:center;background:#eaf8f5;border:1px solid #b9e1d9;color:#0b8878}
+.finding-title-icon svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.finding-title-icon--star svg{fill:currentColor;stroke-width:1.4}
+.finding-title-icon--camera,.finding-title-icon--globe,.finding-title-icon--google{background:#eef4ff;border-color:#ccdafa;color:#3455a4}
+.finding-title-icon--phone,.finding-title-icon--message,.finding-title-icon--calendar{background:#f1f8ff;border-color:#cce2f6;color:#176da2}
+.finding-title-icon--star{background:#fff8e8;border-color:#efdca6;color:#a96d00}
+.finding-title-icon--pin{background:#fff2ef;border-color:#f3c9bf;color:#a64934}
+.finding-title-icon--clock,.finding-title-icon--tag,.finding-title-icon--file{background:#f5f1ff;border-color:#ddd1f4;color:#6448a0}
+.module-findings--absent>.finding-title{margin-top:-4px!important;margin-bottom:10px!important}
+@media(max-width:640px){.finding-title-icon{width:31px;height:31px;flex-basis:31px}.finding-title-icon svg{width:17px;height:17px}}
+
+
+/* Quio 16.0 — resultados premium, compactos y escaneables */
+.finding-case{padding:0;overflow:hidden;border-radius:16px;background:#fff;border:1px solid #e3e8ee;box-shadow:0 8px 24px rgba(15,23,42,.035)}
+.finding-heading{position:relative;display:flex;align-items:center;gap:11px;min-height:54px;padding:10px 16px 10px 18px;background:#f8fafb;border-bottom:1px solid #e6ebef}
+.finding-heading-accent{position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--mint-dark,#149780)}
+.finding-heading h4{margin:0;font-size:1rem;line-height:1.25;color:var(--ink);font-weight:800}
+.finding-heading .finding-title-icon{width:30px;height:30px;flex-basis:30px;border-radius:9px;background:#fff;border-color:#dbe5e2;box-shadow:0 2px 6px rgba(15,23,42,.04)}
+.finding-heading .finding-title-icon svg{width:16px;height:16px}
+.finding-content-grid{display:grid;gap:0}
+.finding-content-grid>.module-state,.finding-content-grid>.module-why,.finding-content-grid>.module-action{margin:0!important;padding:15px 18px 15px 50px!important;border:0!important;border-radius:0!important;background:#fff!important;min-height:0}
+.finding-content-grid>.module-state+*,.finding-content-grid>.module-why+*{border-top:1px solid #edf0f3!important}
+.finding-content-grid>.module-state:before,.finding-content-grid>.module-why:before,.finding-content-grid>.module-action:before{left:16px!important;top:15px!important;width:24px!important;height:24px!important;border-radius:8px!important;font-size:11px!important}
+.finding-content-grid>.module-state strong,.finding-content-grid>.module-why strong,.finding-content-grid>.module-action strong{margin-bottom:4px!important;font-size:.76rem!important;letter-spacing:.045em;text-transform:uppercase}
+.finding-content-grid p{margin:0!important;line-height:1.48;color:#475569}
+.finding-content-grid>.module-why{background:#fffdf8!important}
+.finding-content-grid>.module-action{background:#f4fbf9!important}
+.module-cases{display:grid;gap:14px}
+.module-findings--absent{padding:20px}
+.module-findings--absent>.finding-heading{margin:0;border:1px solid #e3e8ee;border-radius:16px 16px 0 0}
+.module-findings--absent>.finding-content-grid{border:1px solid #e3e8ee;border-top:0;border-radius:0 0 16px 16px;overflow:hidden}
+@media(min-width:900px){.finding-content-grid.has-no-action{grid-template-columns:1fr 1fr}.finding-content-grid.has-no-action>*+*{border-top:0!important;border-left:1px solid #edf0f3!important}}
+@media(max-width:640px){.finding-heading{padding-right:12px}.finding-content-grid>.module-state,.finding-content-grid>.module-why,.finding-content-grid>.module-action{padding-right:14px!important}}
+
+/* Quio 16.1 — resultados ejecutivos: solo hallazgos accionables */
+.finding-content-grid{grid-template-columns:1fr!important}
+.finding-content-grid>.module-state,.finding-content-grid>.module-action{padding:14px 18px 14px 18px!important}
+.finding-content-grid>.module-state:before,.finding-content-grid>.module-action:before{display:none!important}
+.finding-content-grid>.module-state strong,.finding-content-grid>.module-action strong{font-size:.72rem!important}
+.finding-content-grid>.module-action{border-top:1px solid #dfeeea!important;background:#f4fbf9!important}
+.module-findings--absent .module-state,.module-findings--absent .module-action{padding-left:18px!important}
+
+/* Quio 16.2 — contraste consultivo y respiración moderada del formulario */
+.finding-content-grid>.module-state{
+  background:#fffaf0!important;
+  border-top:0!important;
+  border-left:4px solid #d99a2b!important;
+}
+.finding-content-grid>.module-state strong{color:#9a650f!important}
+.finding-content-grid>.module-state p{color:#3f4652!important}
+.finding-content-grid>.module-action{
+  border-left:4px solid var(--mint-dark,#149780)!important;
+  background:#f1faf7!important;
+}
+.finding-content-grid>.module-action strong{color:#087f70!important}
+.question-list{gap:18px;margin:26px 0}
+.question-card{padding:19px 18px;border-radius:16px}
+.answer-group{margin-top:15px}
+
+
+/* Quio 17.1 — lenguaje visual unificado para pantalla y PDF */
+.findings-by-module--clean{margin-top:28px;display:grid;gap:26px}
+.module-findings{padding:0;border:0;box-shadow:none;background:transparent;margin:0}
+.module-findings>h3{font-size:1.08rem;margin:0 0 12px;padding-bottom:9px;border-bottom:1px solid #e5e9ef}
+.module-good{background:#fff;border:1px solid #e4e9ee;border-radius:14px;padding:16px 18px;margin-bottom:12px}
+.module-good strong{font-size:.76rem;letter-spacing:.04em;text-transform:uppercase;color:#087f70;margin-bottom:8px}
+.module-good ul{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 18px;padding:0;margin:0;list-style:none}
+.module-good li{position:relative;padding-left:18px;margin:0!important;color:#445064;font-size:.92rem;line-height:1.45}
+.module-good li:before{content:'✓';position:absolute;left:0;top:0;color:#139a83;font-weight:800}
+.module-cases{display:grid;gap:10px;margin-top:0!important;padding-top:0!important;border-top:0!important}
+.finding-case,.module-findings--absent{border:1px solid #e3e8ee;border-radius:14px;background:#fff;box-shadow:none;overflow:hidden;padding:0}
+.finding-heading{min-height:48px;padding:9px 14px 9px 16px;background:#fbfcfd;border-bottom:1px solid #edf0f3}
+.finding-heading-accent{width:3px}
+.finding-heading h4{font-size:.96rem}
+.finding-heading .finding-title-icon{width:27px;height:27px;flex-basis:27px;box-shadow:none}
+.finding-heading .finding-title-icon svg{width:15px;height:15px}
+.finding-body{padding:13px 16px 14px;display:grid;gap:9px}
+.finding-body p{margin:0;display:grid;grid-template-columns:145px 1fr;gap:12px;align-items:start;line-height:1.45}
+.finding-body strong{font-size:.71rem;letter-spacing:.035em;text-transform:uppercase;padding-top:2px}
+.finding-body span{color:#455064;font-size:.91rem}
+.finding-opportunity strong{color:#9a650f}
+.finding-solution{padding-top:9px;border-top:1px solid #edf0f3}
+.finding-solution strong{color:#087f70}
+.finding-solution span{font-weight:650;color:#253244}
+.module-findings--absent>h3{margin:0 0 12px;border:0}
+.module-findings--absent>.finding-heading{border:0;border-bottom:1px solid #edf0f3;border-radius:0;margin:0}
+.recommendation,.plan-panel,.future-panel,.chart-card,.pillar-card{box-shadow:none!important}
+.plan-panel .timeline{gap:12px}
+.timeline-item{padding:10px 0;border-bottom:1px solid #edf0f3}
+.timeline-item:last-child{border-bottom:0}
+.timeline-icon{width:29px;height:29px;border-radius:50%;background:#f2f8f7;border-color:#d8e9e5}
+.question-list{gap:17px;margin:25px 0}
+.question-card{padding:18px;border-radius:15px}
+@media(max-width:760px){.module-good ul{grid-template-columns:1fr}.finding-body p{grid-template-columns:1fr;gap:3px}.finding-solution{padding-top:10px}}
+
+/* Quio 17.1 — informe ejecutivo más claro */
+.module-good{padding:14px 16px}
+.module-good ul{grid-template-columns:1fr;gap:5px}
+.finding-body{gap:7px;padding:12px 16px 13px}
+.finding-body p{grid-template-columns:82px 1fr;gap:10px}
+.finding-body strong{font-size:.73rem}
+.finding-opportunity strong{color:#9a650f}
+.finding-solution strong{color:#087f70}
+.timeline--simple{gap:0}
+.timeline-item--simple{display:grid!important;grid-template-columns:28px 1fr!important;gap:10px!important;align-items:start;padding:13px 0}
+.timeline-check{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:#eaf7f3;color:#087f70;font-weight:900}
+.timeline-item--simple strong{font-size:.95rem;line-height:1.4}
+@media(max-width:760px){.finding-body p{grid-template-columns:1fr;gap:2px}}
+
+/* Quio 18.0 — foco accesible e identidad del Índice Quio */
+.score-ring small{display:block;margin-bottom:-5px;color:var(--mint-dark);font-size:.7rem;font-weight:850;letter-spacing:.12em}
+.btn:focus-visible,.icon-btn:focus-visible,.text-btn:focus-visible,.nav-item:focus-visible,.answer-btn:focus-visible,.action-btn:focus-visible,.dialog-close:focus-visible{
+  outline:3px solid rgba(82,103,232,.32);
+  outline-offset:3px;
+}
+.answer-btn{min-height:44px;transition:background-color .15s,border-color .15s,color .15s}
+.question-number{display:inline-block;margin-bottom:6px;color:var(--mint-dark);font-size:.72rem;font-weight:850;letter-spacing:.045em;text-transform:uppercase}
+.answer-group{grid-template-columns:repeat(4,minmax(0,1fr))}
+.answer-btn--unknown{color:#596579}
+.answer-btn--unknown.selected{background:#edf2f8;border-color:#9aabc0;color:#29384c}
+.question-note{margin-top:13px;padding:12px 14px;border-radius:11px;background:#f7f9fb;border:1px solid #e4e9ef}
+.question-note[hidden]{display:none}
+.question-note label{display:block;margin-bottom:6px;font-size:.78rem;font-weight:750;color:#475569}
+.question-note textarea{width:100%;resize:vertical;padding:10px 11px;border:1px solid var(--line);border-radius:9px;font:inherit;background:#fff}
+.question-progress,.quality-summary,.meeting-evidence{display:flex;align-items:center;justify-content:space-between;gap:18px;border:1px solid #dce7e4;background:#f5fbf9;border-radius:13px;padding:13px 16px}
+.question-progress{margin-top:20px}
+.question-progress strong,.question-progress span{font-size:.85rem}
+.question-progress span{color:var(--muted)}
+.quality-summary{margin:22px 0;justify-content:flex-start}
+.quality-summary div{display:grid;min-width:180px}
+.quality-summary strong{font-size:1.45rem;color:var(--ink)}
+.quality-summary span{font-size:.78rem;color:var(--muted)}
+.meeting-evidence{margin:18px 0 22px;align-items:flex-start}
+.meeting-evidence strong{display:block;margin-top:5px}
+.meeting-evidence>p{max-width:520px;margin:0;font-size:.84rem;color:var(--muted)}
+@media(max-width:900px){.answer-group{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.answer-group{grid-template-columns:1fr}.question-progress,.quality-summary,.meeting-evidence{align-items:flex-start;flex-direction:column}.quality-summary div{min-width:0}}
+.auth-gate{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 72% 8%,rgba(125,226,209,.18),transparent 34%),#0b1020}.auth-card{width:min(440px,100%);display:grid;gap:18px;padding:36px;border-radius:24px;background:#fff;box-shadow:0 30px 90px rgba(0,0,0,.35)}.auth-card h1{margin:0;font-size:30px;line-height:1.15}.auth-card>p:not(.eyebrow){margin:0;color:var(--muted)}.auth-card label{display:grid;gap:7px;font-weight:750;font-size:13px}.auth-card input{width:100%;padding:13px;border:1px solid var(--line);border-radius:11px;font:inherit}.auth-card .btn{justify-content:center;min-height:46px}.auth-brand{display:flex;align-items:center;gap:10px;color:var(--ink);font-size:23px}.auth-brand span{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:var(--ink);color:var(--mint);font-weight:850}.auth-message{padding:12px 14px;border:1px solid #fecdd3;border-radius:12px;background:#fff1f2;color:#9f1239;font-size:13px}.cloud-account{max-width:150px}.auth-card .text-btn{justify-self:center;cursor:pointer}
+@media(max-width:700px){.auth-card{padding:26px}.cloud-account{display:none}}

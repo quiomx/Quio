@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0b1020">
+  <meta name="description" content="Diagnóstico Quio 18.0 RC para revisar qué tan fácil es encontrar, comprender y contactar a un negocio local.">
+  <title>Diagnóstico Quio 18.0 RC</title>
+  <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css?v=18.0.4">
+  <link rel="manifest" href="manifest.webmanifest">
+</head>
+<body>
+  <a class="skip-link" href="#main">Saltar al contenido</a>
+
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Navegación principal">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">Q</div>
+        <div class="brand-copy"><strong>Quio</strong><span>Diagnóstico 18.0 RC</span></div>
+        <button id="sidebarToggle" class="sidebar-toggle" type="button" aria-label="Ocultar menú lateral" aria-expanded="true" title="Ocultar menú lateral">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <rect class="sidebar-frame" x="3" y="4" width="18" height="16" rx="3"></rect>
+            <path class="sidebar-divider" d="M9 4v16"></path>
+            <path class="toggle-arrow" d="m16 9-3 3 3 3"></path>
+          </svg>
+        </button>
+      </div>
+
+      <nav class="side-nav">
+        <button class="nav-item active" data-view="dashboard" aria-current="page" title="Revisiones"><span>◫</span>Revisiones</button>
+        <button class="nav-item" data-view="wizard" title="Nueva revisión"><span>◇</span>Nueva revisión</button>
+        <button class="nav-item" data-view="history" title="Todas las revisiones"><span>◷</span>Todas las revisiones</button>
+        <button class="nav-item" data-view="methodology" title="Metodología"><span>◎</span>Metodología</button>
+      </nav>
+
+      <div class="sidebar-note" id="sidebarNote">
+        <span class="dot"></span>
+        <p><strong id="sidebarNoteTitle">Enfoque Quio</strong><br><span id="sidebarNoteText">La revisión se organiza por Perfil de Google, sitio web, formas de contacto y agenda en línea.</span></p>
+      </div>
+      <p class="sidebar-version">v18.0 RC · revisión por activos</p>
+    </aside>
+
+    <main id="main" class="main-content">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow" id="sectionEyebrow">MÓDULO DE REVISIONES</p>
+          <h1 id="sectionTitle">Diagnóstico Quio</h1>
+        </div>
+        <div class="top-actions">
+          <a class="btn btn-secondary" href="../gestion/">Gestión</a>
+          <button id="helpBtn" class="icon-btn" aria-label="Abrir ayuda">?</button>
+          <button class="btn btn-primary" data-start>Nueva revisión</button>
+        </div>
+      </header>
+
+      <section id="dashboardView" class="view active" aria-labelledby="sectionTitle">
+        <div class="hero-panel compact-hero">
+          <div>
+            <span class="pill">Uso interno</span>
+            <h2>Realiza una nueva revisión o continúa una existente.</h2>
+            <p>Esta revisión permite detectar, junto con el dueño del negocio, qué conviene mejorar para que más personas lo encuentren, confíen en él y puedan contactarlo con facilidad.</p>
+            <div class="hero-actions">
+              <button class="btn btn-light" data-start>Nueva revisión</button>
+              <button class="btn btn-ghost-light" data-view-target="history">Ver todas las revisiones</button>
+            </div>
+          </div>
+          <div class="hero-score" aria-label="Número de revisiones guardadas">
+            <div class="hero-score-icon" aria-hidden="true">▣</div>
+            <strong id="heroAvg">0</strong>
+            <span>Revisiones guardadas</span>
+            <small id="storageMode">Sincronizando con la nube</small>
+          </div>
+        </div>
+
+        <article class="panel recent-panel">
+          <div class="panel-head"><div><p class="eyebrow">TRABAJO RECIENTE</p><h3>Revisiones recientes</h3></div><button class="text-btn" data-view-target="history">Ver todas →</button></div>
+          <div id="recentList" class="record-list"></div>
+        </article>
+      </section>
+
+      <section id="wizardView" class="view">
+        <div class="wizard-shell">
+          <aside class="wizard-rail">
+            <p class="eyebrow">REVISIÓN GUIADA</p>
+            <ol id="stepRail" class="step-rail"></ol>
+            <div class="save-status"><span id="saveDot"></span><span id="saveText">Borrador local</span></div>
+          </aside>
+
+          <div class="wizard-main">
+            <div class="wizard-progress"><span id="progressBar"></span></div>
+            <div id="wizardContent"></div>
+            <div class="wizard-actions">
+              <button id="prevBtn" class="btn btn-secondary">Anterior</button>
+              <div class="action-right">
+                <button id="saveDraftBtn" class="btn btn-secondary">Guardar borrador</button>
+                <button id="nextBtn" class="btn btn-primary">Continuar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="historyView" class="view">
+        <div class="section-intro"><p class="eyebrow">REVISIONES GUARDADAS</p><h2>Consulta, edita o elimina una revisión.</h2><p>Este módulo conserva únicamente la información necesaria para realizar y entregar las revisiones Quio.</p></div>
+        <div class="toolbar">
+          <label class="search-box"><span>⌕</span><input id="historySearch" type="search" placeholder="Buscar negocio, giro o ciudad"></label>
+          <select id="historyFilter" aria-label="Filtrar por nivel"><option value="all">Todos los niveles</option><option value="critical">Requiere atención</option><option value="basic">Base inicial</option><option value="functional">Va funcionando</option><option value="strong">Sólido</option></select>
+          <button id="exportAllBtn" class="btn btn-secondary">Exportar JSON</button>
+        </div>
+        <article class="panel table-panel"><div class="table-wrap"><table><thead><tr><th>Negocio</th><th>Giro</th><th>Fecha</th><th>Índice Quio</th><th>Nivel</th><th>Paquete</th><th>Acciones</th></tr></thead><tbody id="historyBody"></tbody></table></div></article>
+      </section>
+
+      <section id="methodologyView" class="view">
+        <div class="methodology-intro"><span class="pill dark">REVISIÓN QUIO</span><h2>Primero revisamos. Después mejoramos lo necesario.</h2><p>En 30 minutos revisamos contigo si encuentran el negocio sin problemas, si da buena impresión, si se entiende lo que ofrece y si es fácil contactarlo.</p></div>
+        <div id="methodologyCards" class="methodology-grid"></div>
+        <article class="panel rules-panel"><div class="panel-head"><div><p class="eyebrow">LÓGICA</p><h3>Principios y reglas de negocio</h3></div></div><div id="rulesList" class="rules-list"></div></article>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="helpDialog" class="dialog">
+    <button class="dialog-close" aria-label="Cerrar">×</button>
+    <p class="eyebrow">AYUDA CONTEXTUAL</p><h2>Cómo conducir una revisión Quio</h2>
+    <div class="help-grid"><div><strong>1. Observa</strong><p>Conversa con el cliente y revisa el negocio como lo haría una persona que lo encuentra por primera vez.</p></div><div><strong>2. Califica</strong><p>Usa Sí, En parte o No según lo que ambos puedan comprobar durante la reunión.</p></div><div><strong>3. Prioriza</strong><p>El sistema detecta obstáculos y organiza acciones por impacto.</p></div><div><strong>4. Entrega</strong><p>Genera un informe ejecutivo y conserva el historial local.</p></div></div>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="decision-engine.js?v=18.0.4"></script>
+  <script src="script.js?v=18.0.4"></script>
+  <script src="supabase-config.js?v=18.1.0"></script>
+  <script src="sync.js?v=18.1.0"></script>
+<script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js"));}</script>
+</body>
+</html>
