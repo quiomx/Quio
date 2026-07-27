@@ -2,8 +2,9 @@
 window.QuioCore=(()=>{
   const KEY='quio_management_v1';
   const PRE_V8_BACKUP_KEY='quio_management_pre_v8_backup';
-  const SCHEMA='2.0.0';
-  const ENTITIES=['prospects','clients','businesses','contacts','reviews','quotes','services','packages','projects','activities','deliverables','payments','expenses','timeEntries','inventoryProducts','inventoryMovements','followups','files'];
+  const PRE_V9_BACKUP_KEY='quio_management_pre_v9_backup';
+  const SCHEMA='3.0.0';
+  const ENTITIES=['prospects','clients','businesses','contacts','reviews','quotes','services','packages','projects','documents','activities','deliverables','payments','expenses','timeEntries','inventoryProducts','inventoryMovements','followups','files'];
   const now=()=>new Date().toISOString();
   const id=(prefix='q')=>`${prefix}_${crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2)}`;
   const base=(prefix,data={})=>({id:id(prefix),createdAt:now(),updatedAt:now(),status:'active',archived:false,...data});
@@ -51,7 +52,14 @@ window.QuioCore=(()=>{
       prospectStages:['Nuevo','Contactado','Revisión agendada','Revisión realizada','Propuesta enviada','En decisión','Ganado','No continuó'],
       projectStatuses:['Por iniciar','En curso','En espera del cliente','En revisión','Entregado','Seguimiento','Cerrado','Cancelado'],
       activityTemplates:['Confirmar alcance','Solicitar accesos','Implementar mejoras','Revisión interna','Entrega al cliente'],
-      lowStockThreshold:1
+      lowStockThreshold:1,
+      quoteValidityDays:15,defaultDepositPct:50,defaultPaymentMethod:'Transferencia',
+      defaultAdjustmentRounds:1,defaultSupportDays:15,
+      baseTerms:'Los tiempos comienzan cuando Quio recibe la información y los accesos necesarios. Los cambios fuera del alcance se cotizan por separado.',
+      quioResponsible:'',quioEmail:'',quioPhone:'',quioAddress:'',
+      showTaxes:true,showDiscounts:true,
+      folioPrefixes:{quote:'COT',serviceOrder:'OS',implementation:'IMP',delivery:'AE',change:'CA'},
+      folioCounters:{quote:1,serviceOrder:1,implementation:1,delivery:1,change:1}
     };
   }
   function emptyDB(){
@@ -72,15 +80,22 @@ window.QuioCore=(()=>{
   }
   function migrate(raw){
     const source=raw&&typeof raw==='object'?raw:null;
-    const wasPreV8=source&&source.schemaVersion!==SCHEMA;
+    const previousSchema=source?.schemaVersion||'0.0.0';
+    const wasPreV8=source&&previousSchema!=='2.0.0'&&previousSchema!==SCHEMA;
+    const wasPreV9=source&&previousSchema!==SCHEMA;
     if(wasPreV8&&!localStorage.getItem(PRE_V8_BACKUP_KEY)){
       try{localStorage.setItem(PRE_V8_BACKUP_KEY,JSON.stringify({...source,automaticBackupAt:now()}))}catch(error){console.warn('No fue posible crear el respaldo previo a v8.',error)}
+    }
+    if(wasPreV9&&!localStorage.getItem(PRE_V9_BACKUP_KEY)){
+      try{localStorage.setItem(PRE_V9_BACKUP_KEY,JSON.stringify({...source,automaticBackupAt:now()}))}catch(error){console.warn('No fue posible crear el respaldo previo a v9.',error)}
     }
     const db={...emptyDB(),...(source||{})};
     ENTITIES.forEach(k=>db[k]=Array.isArray(db[k])?db[k]:[]);
     const inheritedSettings={...(source?.settings||{})};
     if(inheritedSettings.hourlyTarget==null||n(inheritedSettings.hourlyTarget)===350)inheritedSettings.hourlyTarget=500;
     db.settings={...defaultSettings(),...inheritedSettings};
+    db.settings.folioPrefixes={...defaultSettings().folioPrefixes,...(inheritedSettings.folioPrefixes||{})};
+    db.settings.folioCounters={...defaultSettings().folioCounters,...(inheritedSettings.folioCounters||{})};
     defaultServices.forEach(service=>{
       const existing=db.services.find(item=>item.name===service.name||item.id===service.id);
       if(!existing){db.services.push({...service});return}
@@ -89,8 +104,37 @@ window.QuioCore=(()=>{
     });
     const initialPackages=defaultPackages();
     initialPackages.forEach(pkg=>{if(!db.packages.some(x=>x.id===pkg.id))db.packages.push(pkg)});
+    const plusDays=(days=15)=>new Date(Date.now()+Math.max(0,n(days))*86400000).toISOString().slice(0,10);
+    db.quotes.forEach((quote,index)=>{
+      quote.folio=quote.folio||`COT-${new Date(quote.createdAt||Date.now()).getFullYear()}-${String(index+1).padStart(4,'0')}`;
+      quote.status=quote.status||'Borrador';
+      quote.issuedAt=quote.issuedAt||quote.createdAt||now();
+      quote.validUntil=quote.validUntil||plusDays(db.settings.quoteValidityDays);
+      quote.depositPct=quote.depositPct==null?n(db.settings.defaultDepositPct):n(quote.depositPct);
+      quote.paymentMethod=quote.paymentMethod||db.settings.defaultPaymentMethod;
+      quote.items=Array.isArray(quote.items)?quote.items:[];
+      quote.extras=Array.isArray(quote.extras)?quote.extras:[];
+      quote.version=Math.max(1,n(quote.version)||1);
+      quote.history=Array.isArray(quote.history)?quote.history:[];
+    });
+    db.documents.forEach(document=>{
+      document.documentType=document.documentType||'serviceOrder';
+      document.status=document.status||'Borrador';
+      document.version=Math.max(1,n(document.version)||1);
+      document.history=Array.isArray(document.history)?document.history:[];
+      document.versions=Array.isArray(document.versions)?document.versions:[];
+      document.payload=document.payload&&typeof document.payload==='object'?document.payload:{};
+    });
+    const counterFrom=(prefix,records)=>records.reduce((max,record)=>{
+      const match=String(record.folio||'').match(new RegExp(`^${prefix}-\\d{4}-(\\d+)$`));
+      return match?Math.max(max,n(match[1])+1):max;
+    },1);
+    db.settings.folioCounters.quote=Math.max(n(db.settings.folioCounters.quote)||1,counterFrom(db.settings.folioPrefixes.quote,db.quotes));
+    [['serviceOrder','serviceOrder'],['implementation','implementation'],['delivery','delivery'],['change','change']].forEach(([key,type])=>{
+      db.settings.folioCounters[key]=Math.max(n(db.settings.folioCounters[key])||1,counterFrom(db.settings.folioPrefixes[key],db.documents.filter(x=>x.documentType===type)));
+    });
     ensureInventory(db);
-    db.meta={demo:false,...(db.meta||{}),migratedToV8At:db.meta?.migratedToV8At||(wasPreV8?now():null),preV8BackupKey:wasPreV8?PRE_V8_BACKUP_KEY:db.meta?.preV8BackupKey};
+    db.meta={demo:false,...(db.meta||{}),migratedToV8At:db.meta?.migratedToV8At||(wasPreV8?now():null),preV8BackupKey:wasPreV8?PRE_V8_BACKUP_KEY:db.meta?.preV8BackupKey,migratedToV9At:db.meta?.migratedToV9At||(wasPreV9?now():null),preV9BackupKey:wasPreV9?PRE_V9_BACKUP_KEY:db.meta?.preV9BackupKey};
     db.schemaVersion=SCHEMA;db.updatedAt=now();return db;
   }
   function load(){try{return migrate(JSON.parse(localStorage.getItem(KEY)||'null'))}catch(e){console.warn('Respaldo local inválido',e);return emptyDB()}}
@@ -230,5 +274,5 @@ window.QuioCore=(()=>{
     upsert('followups',{clientId:customer.id,date:new Date(Date.now()-86400000).toISOString().slice(0,10),reason:'Confirmar accesos',channel:'WhatsApp',status:'Pendiente',demo:true},'fol');
     save();return db;
   }
-  return{KEY,PRE_V8_BACKUP_KEY,SCHEMA,ENTITIES,now,id,base,db:()=>db,save,list,get,upsert,archive,restore,replace,merge,money,date,monthKey,round,estimate,packageCost,marginSignal,financialSnapshot,quoteEconomics,quoteTotals,projectEconomics,projectProfit,calculations,projection,paymentNet,validateV50,importReview,seed,emptyDB,migrate};
+  return{KEY,PRE_V8_BACKUP_KEY,PRE_V9_BACKUP_KEY,SCHEMA,ENTITIES,now,id,base,db:()=>db,save,list,get,upsert,archive,restore,replace,merge,money,date,monthKey,round,estimate,packageCost,marginSignal,financialSnapshot,quoteEconomics,quoteTotals,projectEconomics,projectProfit,calculations,projection,paymentNet,validateV50,importReview,seed,emptyDB,migrate};
 })();
