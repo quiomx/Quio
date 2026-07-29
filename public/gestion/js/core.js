@@ -28,7 +28,7 @@ window.QuioCore=(()=>{
       id:'pkg_esencial',name:'Esencial',price:3500,estimatedHours:.5,stands:1,nfcCards:0,trips:1,
       software:0,providers:0,otherCosts:0,status:'Activo',order:1,color:'#6f4cff',
       description:'Mejorar la presencia del negocio en Google.',
-      contents:['Revisión Quio','Mejora de Google Business y Google Maps','Corrección de información del perfil','Stand NFC + QR','Guía sencilla de uso']
+      contents:['Revisión Quio','Mejora de Google Business y Google Maps','Corrección de información del perfil','NFC + QR para facilitar reseñas','Guía sencilla de uso']
     },
     {
       id:'pkg_intermedio',name:'Profesional',price:8000,estimatedHours:2,stands:1,nfcCards:0,trips:1,
@@ -55,11 +55,11 @@ window.QuioCore=(()=>{
       incomeCategories:['Anticipo','Liquidación','Pago completo','Ingreso adicional','Otro ingreso'],
       paymentMethods:['Transferencia','Efectivo','Tarjeta','Otro'],
       followupTypes:['WhatsApp','Llamada','Correo','Presencial','Otro'],
-      inventoryCategories:['Stands','Tarjetas NFC','Elementos QR','Materiales de entrega','Otros'],
+      inventoryCategories:['NFC','Elementos QR','Materiales de entrega','Otros'],
       prospectStages:['Nuevo','Contactado','Revisión agendada','Revisión realizada','Propuesta enviada','En decisión','Ganado','No continuó'],
       clientStatuses:['Prospecto','Revisión agendada','Revisión realizada','Cotización enviada','Cotización aceptada','Cliente activo','Proyecto en desarrollo','Proyecto entregado','Cliente inactivo','No interesado'],
       quoteStatuses:['Borrador','Enviada','Aceptada','Rechazada','Vencida','Cancelada'],
-      projectStatuses:['Pendiente de iniciar','En desarrollo','Esperando información','Esperando aprobación','Listo para entregar','Entregado','Terminado','Cancelado'],
+      projectStatuses:['Por iniciar','En curso','En espera del cliente','En revisión','Entregado','Seguimiento','Cerrado','Cancelado'],
       activityTemplates:['Información recibida','Logo recibido','Contenido recibido','Perfil de Google revisado','Sitio construido','Revisión del cliente','Dominio conectado','NFC configurado','Entrega realizada','Pago liquidado'],
       lowStockThreshold:1,
       quoteValidityDays:15,defaultDepositPct:50,defaultPaymentMethod:'Transferencia',
@@ -80,8 +80,8 @@ window.QuioCore=(()=>{
   }
   function ensureInventory(db){
     const wanted=[
-      {name:'Stand NFC',sku:'NFC-STAND',category:'Stands',unitCost:n(db.settings.standUnitCost),stock:0,minStock:2},
-      {name:'Tarjeta NFC',sku:'NFC-CARD',category:'Tarjetas NFC',unitCost:n(db.settings.nfcCardUnitCost),stock:0,minStock:2}
+      {name:'NFC',sku:'NFC-STAND',category:'NFC',unitCost:n(db.settings.standUnitCost),stock:0,minStock:2},
+      {name:'NFC',sku:'NFC-CARD',category:'NFC',unitCost:n(db.settings.nfcCardUnitCost),stock:0,minStock:2}
     ];
     wanted.forEach(product=>{
       const current=db.inventoryProducts.find(x=>x.sku===product.sku);
@@ -198,9 +198,10 @@ window.QuioCore=(()=>{
       document.versions=Array.isArray(document.versions)?document.versions:[];
       document.payload=document.payload&&typeof document.payload==='object'?document.payload:{};
     });
-    const projectStatusMap={'Por iniciar':'Pendiente de iniciar','En curso':'En desarrollo','En espera del cliente':'Esperando información','En revisión':'Esperando aprobación','Seguimiento':'Terminado','Cerrado':'Terminado'};
+    const projectStatusMap={'Pendiente de iniciar':'Por iniciar','En desarrollo':'En curso','Esperando información':'En espera del cliente','Esperando aprobación':'En revisión','Listo para entregar':'En revisión','Terminado':'Cerrado','Completado':'Cerrado'};
+    db.settings.projectStatuses=defaultSettings().projectStatuses;
     db.projects.forEach(project=>{
-      project.status=projectStatusMap[project.status]||project.status||'Pendiente de iniciar';
+      project.status=projectStatusMap[project.status]||project.status||'Por iniciar';
       project.deliveryDate=project.deliveryDate||project.deliveredAt||'';
       project.siteUrl=project.siteUrl||project.deliverableUrl||'';
       project.repositoryUrl=project.repositoryUrl||'';
@@ -239,6 +240,14 @@ window.QuioCore=(()=>{
   }
   function archive(entity,recordId){const r=get(entity,recordId);if(!r)return false;if(!r.archived)r.statusBeforeArchive=r.status;r.archived=true;r.status='archived';r.updatedAt=now();save();return true}
   function restore(entity,recordId){const r=get(entity,recordId);if(!r)return false;r.archived=false;r.status=r.statusBeforeArchive||(entity==='followups'?'Pendiente':'Activo');delete r.statusBeforeArchive;r.updatedAt=now();save();return true}
+  function remove(entity,recordId){
+    if(!Array.isArray(db[entity]))throw new Error(`Entidad desconocida: ${entity}`);
+    const index=db[entity].findIndex(record=>record.id===recordId);
+    if(index<0)return false;
+    db[entity].splice(index,1);
+    save();
+    return true;
+  }
   function replace(next,options={}){db=migrate(next);save(options);return db}
   function merge(next,options={}){const incoming=migrate(next);ENTITIES.forEach(k=>incoming[k].forEach(r=>{const ix=db[k].findIndex(x=>x.id===r.id);if(ix<0)db[k].push(r);else if((r.updatedAt||'')>(db[k][ix].updatedAt||''))db[k][ix]=r}));db.settings={...db.settings,...incoming.settings};save(options);return db}
   const money=value=>new Intl.NumberFormat('es-MX',{style:'currency',currency:db.settings.currency||'MXN',maximumFractionDigits:2}).format(n(value));
@@ -435,5 +444,5 @@ window.QuioCore=(()=>{
     upsert('followups',{clientId:customer.id,date:new Date(Date.now()-86400000).toISOString().slice(0,10),reason:'Confirmar accesos',channel:'WhatsApp',status:'Pendiente',demo:true},'fol');
     save();return db;
   }
-  return{KEY,PRE_V8_BACKUP_KEY,PRE_V9_BACKUP_KEY,PRE_V10_BACKUP_KEY,SCHEMA,ENTITIES,now,id,base,db:()=>db,save,list,get,upsert,archive,restore,replace,merge,money,date,monthKey,round,estimate,packageCost,marginSignal,financialSnapshot,quoteEconomics,quoteTotals,projectEconomics,projectProfit,calculations,projection,paymentNet,normalizeMovementStatus,upsertFinancialMovement,movementPaidAmount,financialList,financialSummary,clientRecord,clientBalance,findClientDuplicate,recordActivity,validateV50,importReview,seed,emptyDB,migrate};
+  return{KEY,PRE_V8_BACKUP_KEY,PRE_V9_BACKUP_KEY,PRE_V10_BACKUP_KEY,SCHEMA,ENTITIES,now,id,base,db:()=>db,save,list,get,upsert,archive,restore,remove,replace,merge,money,date,monthKey,round,estimate,packageCost,marginSignal,financialSnapshot,quoteEconomics,quoteTotals,projectEconomics,projectProfit,calculations,projection,paymentNet,normalizeMovementStatus,upsertFinancialMovement,movementPaidAmount,financialList,financialSummary,clientRecord,clientBalance,findClientDuplicate,recordActivity,validateV50,importReview,seed,emptyDB,migrate};
 })();

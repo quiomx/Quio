@@ -248,6 +248,8 @@ window.QuioDocuments=(()=>{
     data.history=[...(current?.history||[]),historyEntry(current?'Cotización actualizada':'Cotización creada',data.status)];
     data.financialSnapshot=C.financialSnapshot(data);
     const totals=C.quoteTotals({...data,financialSnapshot:data.financialSnapshot});
+    if(totals.total<=0&&data.freeService!=='on')throw new Error('La cotización tiene total $0.00. Captura un precio o confirma expresamente que el servicio será gratuito.');
+    data.freeService=data.freeService==='on';
     data.depositAmount=totals.total*data.depositPct/100;
     data.balanceAmount=totals.total-data.depositAmount;
     delete data.deliverablesText;delete data.extrasText;delete data.description;delete data.quantity;
@@ -283,7 +285,7 @@ window.QuioDocuments=(()=>{
     const deliverables=[...(q.items||[]),...(q.extras||[])].map(item=>({text:item.description,done:false}));
     const project=C.upsert('projects',{
       name:`Proyecto ${C.get('businesses',q.businessId)?.name||q.folio}`,clientId:q.clientId,businessId:q.businessId,reviewId:q.reviewId||'',
-      quoteId:q.id,packageId:q.packageId,financialSnapshot:clone(snapshot),agreedNetPrice:snapshot.netPrice,status:'Pendiente de iniciar',progress:0,
+      quoteId:q.id,packageId:q.packageId,financialSnapshot:clone(snapshot),agreedNetPrice:snapshot.netPrice,status:'Por iniciar',progress:0,
       deliverables,checklist:deliverables.length?clone(deliverables):(C.db().settings.activityTemplates||[]).map(text=>({text,done:false})),
       nextStep:'Generar y aceptar orden de servicio'
     },'prj');
@@ -341,6 +343,7 @@ window.QuioDocuments=(()=>{
       ${textarea('deliverablesText','Entregables',itemText,true,6)}
       ${textarea('extrasText','Conceptos extraordinarios',extraText,false,3)}
       ${field('price','Precio calculado',record.financialSnapshot?.price??record.price??baseItems.reduce((sum,item)=>sum+Number(item.quantity||1)*Number(item.price||0),0),'number',true,false,'min="0" step="0.01"')}
+      <label class="check-option full"><input type="checkbox" name="freeService" ${record.freeService?'checked':''}> Confirmo expresamente que este servicio será gratuito</label>
       ${field('discount','Descuento',record.financialSnapshot?.discount??record.discount??0,'number',false,false,'min="0" step="0.01"')}
       ${field('taxRate','Impuesto (%)',record.financialSnapshot?.taxRate??record.taxRate??settings.taxRate,'number',false,false,'min="0" step="0.01"')}
       ${field('depositPct','Anticipo (%)',record.depositPct??settings.defaultDepositPct,'number',true,false,'min="0" max="100"')}
@@ -355,8 +358,8 @@ window.QuioDocuments=(()=>{
       <details class="full form-section"><summary>Costeo interno</summary><div class="form-grid compact-fields">
         ${field('estimatedHours','Horas estimadas',record.financialSnapshot?.estimatedHours??record.estimatedHours??pkg?.estimatedHours??0,'number')}
         ${field('hourlyValue','Valor por hora',record.financialSnapshot?.hourlyValue??record.hourlyValue??settings.hourlyTarget,'number')}
-        ${field('stands','Stands',record.financialSnapshot?.stands??record.stands??pkg?.stands??0,'number')}
-        ${field('nfcCards','Tarjetas NFC',record.financialSnapshot?.nfcCards??record.nfcCards??pkg?.nfcCards??0,'number')}
+        ${field('stands','Unidades NFC',record.financialSnapshot?.stands??record.stands??pkg?.stands??0,'number')}
+        ${field('nfcCards','NFC adicional',record.financialSnapshot?.nfcCards??record.nfcCards??pkg?.nfcCards??0,'number')}
         ${field('trips','Traslados',record.financialSnapshot?.trips??record.trips??pkg?.trips??0,'number')}
         ${field('software','Software',record.financialSnapshot?.software??record.software??pkg?.software??0,'number')}
         ${field('providers','Proveedores',record.financialSnapshot?.providers??record.providers??pkg?.providers??0,'number')}
@@ -379,6 +382,7 @@ window.QuioDocuments=(()=>{
           ${quote.status==='Enviada'?`<button class="btn small" data-quote-status="${quote.id}:Rechazada">Rechazar</button>`:''}
           ${quote.status==='Aceptada'&&!hasProject?`<button class="btn small primary" data-project-from="${quote.id}">Crear proyecto</button>`:''}
           ${quote.status==='Aceptada'&&!hasOrder?`<button class="btn small" data-order-from-quote="${quote.id}">Orden de servicio</button>`:''}
+          <button class="btn small danger btn-danger" data-delete-quote="${quote.id}">Eliminar</button>
         </div></div>`;
       }).join(''):empty('Aún no hay cotizaciones.','Crea la primera a partir de un cliente, revisión o paquete.')}</article></section>`;
   }
@@ -423,9 +427,10 @@ window.QuioDocuments=(()=>{
       $$('[data-edit^="businesses:"]').forEach(button=>button.parentElement?.insertAdjacentHTML('beforeend',`<button class="btn small" data-expedient="business:${button.dataset.edit.split(':')[1]}">Expediente</button>`));
     }
     if(route==='projects'){
-      $$('[data-edit^="projects:"]').forEach(button=>{
-        const id=button.dataset.edit.split(':')[1];
-        button.parentElement?.insertAdjacentHTML('beforeend',`<button class="btn small" data-expedient="project:${id}">Documentos</button><button class="btn small" data-project-doc="${id}:implementation">Implementación</button><button class="btn small" data-project-doc="${id}:change">+ Cambio</button><button class="btn small" data-project-doc="${id}:delivery">Acta</button>`);
+      $$('.project-card').forEach(card=>{
+        const id=card.querySelector('[data-project]')?.dataset.project;if(!id)return;
+        const menu=card.querySelector('.project-more__menu');
+        if(menu)menu.innerHTML=`<button class="btn small btn-sm" data-project-doc="${id}:implementation">Implementación</button><button class="btn small btn-sm" data-project-doc="${id}:change">Registrar cambio</button><button class="btn small btn-sm" data-project-doc="${id}:delivery">Generar acta</button>`;
       });
     }
     if(route==='settings'){
@@ -611,8 +616,8 @@ window.QuioDocuments=(()=>{
     $('#dialogBody').innerHTML=`<div class="timeline">${[...(document.history||[])].reverse().map(item=>`<div class="timeline-item"><span></span><div><strong>${esc(item.action)}</strong><small>${C.date(item.at)} · ${esc(item.user||'Usuario Quio')}</small>${item.detail?`<p>${esc(item.detail)}</p>`:''}</div></div>`).join('')||empty('Sin historial')}</div>${(document.versions||[]).length?`<h3>Versiones anteriores</h3>${document.versions.map(version=>`<div class="list-row"><strong>Versión ${version.version}</strong>${badge(version.status)}<span>${C.date(version.savedAt)}</span></div>`).join('')}</div>`:''}`;
     $('#recordDialog').showModal();
   }
-  function printHeader(title,folio,version){
-    return`<header class="commercial-header"><div class="commercial-brand"><span class="document-logo-crop"><img src="assets/images/logo-quio.png" alt="Quio"></span><div><small>Presencia digital clara para negocios locales</small></div></div><div><p>${esc(title)}</p><strong>${esc(folio)}</strong><small>Versión ${version||1} · ${C.date(new Date())}</small></div></header>`;
+  function printHeader(title,folio,version,dateValue=new Date()){
+    return`<header class="commercial-header"><div class="commercial-brand"><span class="document-logo-crop"><img src="assets/images/logo-quio.png" alt="Quio"></span><div><small>Presencia digital clara para negocios locales</small></div></div><div><p>${esc(title)}</p><strong>${esc(folio)}</strong><small>Versión ${version||1} · ${C.date(dateValue)}</small></div></header>`;
   }
   function printCurrent(filename){
     const previous=document.title;
@@ -625,18 +630,21 @@ window.QuioDocuments=(()=>{
   }
   function quoteHtml(quote){
     const snapshot=quote.snapshot||snapshotFor({clientId:quote.clientId,businessId:quote.businessId,reviewId:quote.reviewId,quotationId:quote.id});
-    const totals=C.quoteTotals(quote),settings=C.db().settings;
-    return`<article class="commercial-document quote-print">${printHeader('Propuesta de servicio',quote.folio,quote.version)}${partyBlock(snapshot)}
+    const totals=C.quoteTotals(quote),settings=C.db().settings,pkg=C.get('packages',quote.packageId),business=snapshot?.business?.name||C.get('businesses',quote.businessId)?.name||'tu negocio',review=C.get('reviews',quote.reviewId);
+    const allItems=[...(quote.items||[]),...(quote.extras||[])],isPackage=Boolean(pkg)&&!(quote.extras||[]).some(item=>Number(item.price)>0);
+    const context=quote.context||`Durante la revisión identificamos oportunidades para fortalecer la presencia de ${business} en Google y facilitar que nuevos clientes encuentren información clara y medios de contacto.${review?.iqpd!=null?` El punto de partida registrado fue ${review.iqpd}/100.`:''}`;
+    const benefits=(pkg?.contents||allItems.map(item=>item.description)).slice(0,5);
+    const deliverables=isPackage?`<ul class="commercial-checklist">${allItems.map(item=>`<li><span>✓</span>${esc(item.description)}</li>`).join('')}</ul>`:`<table class="data-table"><thead><tr><th>Concepto</th><th>Cant.</th><th>Precio</th><th>Importe</th></tr></thead><tbody>${allItems.map(item=>`<tr><td>${esc(item.description)}</td><td>${item.quantity}</td><td>${C.money(item.price)}</td><td>${C.money(item.quantity*item.price)}</td></tr>`).join('')}</tbody></table>`;
+    return`<article class="commercial-document quote-print">${printHeader('Propuesta de servicio',quote.folio,quote.version,quote.issuedAt)}${partyBlock(snapshot)}
       ${quote.reviewId?`<p class="commercial-reference">Referencia: Revisión Quio · ${esc(C.get('reviews',quote.reviewId)?.iqpd??'—')}/100</p>`:''}
-      <section><p class="eyebrow">CONTEXTO</p><h2>Una propuesta clara para el siguiente paso</h2><p>${esc(quote.context||'Solución recomendada a partir de las necesidades registradas con el cliente.')}</p></section>
-      <section><h3>Entregables</h3><table class="data-table"><thead><tr><th>Concepto</th><th>Cant.</th><th>Precio</th><th>Importe</th></tr></thead><tbody>${[...(quote.items||[]),...(quote.extras||[])].map(item=>`<tr><td>${esc(item.description)}</td><td>${item.quantity}</td><td>${C.money(item.price)}</td><td>${C.money(item.quantity*item.price)}</td></tr>`).join('')}</tbody><tfoot>
-      <tr><td colspan="3">Subtotal</td><td>${C.money(totals.subtotal)}</td></tr>
-      ${settings.showDiscounts!==false&&totals.discount?`<tr><td colspan="3">Descuento</td><td>−${C.money(totals.discount)}</td></tr>`:''}
-      ${settings.showTaxes!==false?`<tr><td colspan="3">Impuestos</td><td>${C.money(totals.tax)}</td></tr>`:''}
-      <tr><th colspan="3">Total</th><th>${C.money(totals.total)} MXN</th></tr></tfoot></table></section>
-      <section class="commercial-grid"><div><small>ANTICIPO</small><strong>${C.money(quote.depositAmount??totals.total*Number(quote.depositPct||0)/100)}</strong><span>${Number(quote.depositPct||0)}%</span></div><div><small>SALDO</small><strong>${C.money(quote.balanceAmount??totals.total*(1-Number(quote.depositPct||0)/100))}</strong></div><div><small>FORMA DE PAGO</small><strong>${esc(quote.paymentMethod||settings.defaultPaymentMethod)}</strong></div><div><small>IMPLEMENTACIÓN</small><strong>${esc(quote.implementationTime||'Por acordar')}</strong></div></section>
+      <section class="commercial-intro"><p class="eyebrow">CONTEXTO</p><h2>Una propuesta clara para ${esc(business)}</h2><p>${esc(context)}</p></section>
+      ${pkg?`<section class="package-highlight"><small>PAQUETE RECOMENDADO</small><strong>Quio ${esc(pkg.name)}</strong><span>${esc(pkg.description||'')}</span></section>`:''}
+      <section class="quote-split"><div><h3>Tu proyecto incluye</h3>${deliverables}</div><div><h3>Al finalizar este proyecto tendrás:</h3><ul>${benefits.map(item=>`<li>${esc(item)}</li>`).join('')}</ul></div></section>
+      <section class="investment-block"><p>INVERSIÓN</p><h3>${esc(pkg?`Quio ${pkg.name}`:'Propuesta personalizada')}</h3><strong>${C.money(totals.total)} MXN</strong><div><span>Anticipo: <b>${C.money(quote.depositAmount??totals.total*Number(quote.depositPct||0)/100)}</b></span><span>Saldo: <b>${C.money(quote.balanceAmount??totals.total*(1-Number(quote.depositPct||0)/100))}</b></span></div>${settings.showDiscounts!==false&&totals.discount?`<small>Incluye descuento de ${C.money(totals.discount)}.</small>`:''}</section>
+      <section class="commercial-grid"><div><small>FORMA DE PAGO</small><strong>${esc(quote.paymentMethod||settings.defaultPaymentMethod)}</strong></div><div><small>IMPLEMENTACIÓN</small><strong>${esc(quote.implementationTime||'Por acordar')}</strong></div><div><small>VIGENCIA</small><strong>${C.date(quote.validUntil)}</strong></div><div><small>IMPUESTOS</small><strong>${settings.showTaxes!==false?C.money(totals.tax):'Incluidos según acuerdo'}</strong></div></section>
       <section class="commercial-two"><div><h3>Información necesaria</h3><p>${esc(quote.clientNeeds||'Información, materiales y accesos autorizados relacionados con el alcance.')}</p></div><div><h3>Vigencia</h3><p>Esta propuesta es válida hasta el ${C.date(quote.validUntil)}.</p></div></section>
       <section class="commercial-two"><div><h3>Condiciones</h3><p>${esc(quote.conditions||settings.baseTerms)}</p></div><div><h3>No incluido</h3><p>${esc(quote.exclusions||'Cualquier servicio no descrito en los entregables.')}</p></div></section>
+      <section class="next-steps"><h3>Próximos pasos</h3><ol><li>Aprobación de la propuesta.</li><li>Pago del anticipo.</li><li>Entrega de información y accesos.</li><li>Implementación.</li><li>Revisión y entrega.</li></ol></section>
       ${quote.notes?`<section><h3>Observaciones</h3><p>${esc(quote.notes)}</p></section>`:''}
       <section class="acceptance-box"><h3>Aceptación de la propuesta</h3><div><span>Nombre y cargo</span><span>Fecha</span><span>Confirmación</span></div><p>La aceptación puede registrarse administrativamente en Quio. No constituye una firma electrónica certificada.</p></section>
       <footer class="commercial-footer"><span>${esc(settings.companyName||'Quio')} · ${esc(settings.quioEmail||'')} · ${esc(settings.quioPhone||'')}</span><span>${esc(quote.folio)}</span></footer></article>`;
@@ -676,12 +684,13 @@ window.QuioDocuments=(()=>{
     const quote=C.get('quotes',id);
     if(!quote)return;
     if(print){
+      const totals=C.quoteTotals(quote);if(totals.total<=0&&!quote.freeService)throw new Error('No se puede generar el PDF: el total es $0.00 y no se confirmó un servicio gratuito.');
       if(!quote.snapshot&&['Enviada','Aceptada'].includes(quote.status))C.upsert('quotes',{id:quote.id,snapshot:snapshotFor({clientId:quote.clientId,businessId:quote.businessId,reviewId:quote.reviewId,quotationId:quote.id}),pdfGeneratedAt:C.now(),history:[...(quote.history||[]),historyEntry('PDF generado')]});
     }
     $('#recordForm').dataset.kind='read-only';
     $('#dialogTitle').textContent=`Cotización ${quote.folio}`;
     const totals=C.quoteTotals(quote);
-    $('#dialogBody').innerHTML=`${quoteHtml(quote)}<div class="internal-cost no-print"><h3>Costeo interno</h3><div class="cost-stack"><span><small>Costo económico</small><b>${C.money(totals.economicCost)}</b></span><span><small>Utilidad estimada</small><b>${C.money(totals.profit)}</b></span><span><small>Margen</small><b>${totals.margin.toFixed(1)}%</b></span></div></div><div class="dialog-actions no-print"><button type="button" class="btn" data-edit="quotes:${quote.id}">Editar</button><button type="button" class="btn primary" data-print-quote="${quote.id}">Descargar PDF / Imprimir</button></div>`;
+    $('#dialogBody').innerHTML=`${quoteHtml(quote)}<div class="internal-cost no-print"><h3>Costeo interno</h3><div class="cost-stack"><span><small>Costo económico</small><b>${C.money(totals.economicCost)}</b></span><span><small>Utilidad estimada</small><b>${C.money(totals.profit)}</b></span><span><small>Margen</small><b>${totals.margin.toFixed(1)}%</b></span></div></div><div class="dialog-actions no-print"><button type="button" class="btn" data-edit="quotes:${quote.id}">Editar</button><button type="button" class="btn danger btn-danger" data-delete-quote="${quote.id}">Eliminar</button><button type="button" class="btn primary btn-primary" data-print-quote="${quote.id}">Descargar PDF / Imprimir</button></div>`;
     $('#recordDialog').showModal();
     if(print)printCurrent(`cotizacion-quio-${quote.folio}`);
   }
@@ -726,9 +735,16 @@ window.QuioDocuments=(()=>{
     $$('[data-doc-history]').forEach(button=>button.onclick=()=>showHistory(button.dataset.docHistory));
     $$('[data-doc-accept]').forEach(button=>button.onclick=()=>acceptanceForm(C.get('documents',button.dataset.docAccept)));
     $$('[data-doc-status]').forEach(button=>button.onclick=()=>{const separator=button.dataset.docStatus.indexOf(':'),id=button.dataset.docStatus.slice(0,separator),status=button.dataset.docStatus.slice(separator+1);try{setDocumentStatus(id,status);toast(`Documento marcado como ${status.toLowerCase()}.`);render()}catch(error){toast(error.message)}});
-    $$('[data-print-quote]').forEach(button=>button.onclick=()=>showQuote(button.dataset.printQuote,true));
+    $$('[data-print-quote]').forEach(button=>button.onclick=()=>{try{showQuote(button.dataset.printQuote,true)}catch(error){toast(error.message)}});
     $$('[data-quote-status]').forEach(button=>button.onclick=()=>{const separator=button.dataset.quoteStatus.indexOf(':'),id=button.dataset.quoteStatus.slice(0,separator),status=button.dataset.quoteStatus.slice(separator+1);setQuoteStatus(id,status);toast(`Cotización marcada como ${status.toLowerCase()}.`);render()});
     $$('[data-quote-duplicate]').forEach(button=>button.onclick=()=>{duplicateQuote(button.dataset.quoteDuplicate);toast('Cotización duplicada como borrador.');render()});
+    $$('[data-delete-quote]').forEach(button=>button.onclick=()=>{
+      const quote=C.get('quotes',button.dataset.deleteQuote);if(!quote)return;
+      const client=C.clientRecord(quote.clientId),project=C.list('projects').find(item=>item.quoteId===quote.id);
+      if($('#recordDialog').open)$('#recordDialog').close();
+      if(project){confirmAction('Cotización vinculada a un proyecto',`${quote.folio} · ${client?.name||'Sin cliente'} está relacionada con “${project.name}”. Para conservar la integridad, confirma para cancelar la cotización sin eliminarla.`,()=>{setQuoteStatus(quote.id,'Cancelada');toast('Cotización cancelada; el proyecto conserva su relación.');render()});return}
+      confirmAction('Eliminar cotización',`Se eliminará ${quote.folio} de ${client?.name||'Sin cliente'}. Esta acción no se puede deshacer.`,()=>{C.remove('quotes',quote.id);C.recordActivity('Cotización eliminada','quotes',quote,`${quote.folio} · ${client?.name||'Sin cliente'}`);toast('Cotización eliminada correctamente.');render()});
+    });
     $$('[data-order-from-quote]').forEach(button=>button.onclick=()=>{const doc=createDocument('serviceOrder',{quotationId:button.dataset.orderFromQuote});openDocumentForm(doc)});
     $$('[data-project-doc]').forEach(button=>button.onclick=()=>{
       const [projectId,type]=button.dataset.projectDoc.split(':');

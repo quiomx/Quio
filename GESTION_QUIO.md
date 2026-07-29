@@ -24,6 +24,19 @@ Prospectos, negocios y seguimientos se trabajan dentro de Clientes. Tiempo e inv
 - Las cotizaciones usan folios `QUIO-AAAA-####` y estados Borrador, Enviada, Aceptada, Rechazada, Vencida o Cancelada.
 - Los proyectos incluyen fechas, estado, siguiente paso, enlaces y checklist sencillo.
 
+## Cotizaciones y operación segura
+
+- Las propuestas existentes y nuevas se renderizan con la plantilla comercial vigente al abrirlas o imprimirlas; los folios, fechas, versiones, importes y textos históricos guardados no se modifican.
+- Las propuestas por paquete muestran entregables como checklist, beneficios, inversión, anticipo, saldo y próximos pasos.
+- Un PDF con total cero requiere confirmar expresamente que el servicio será gratuito.
+- Una cotización sin proyecto puede eliminarse tras confirmar folio y cliente. Si tiene proyecto, la interfaz ofrece cancelarla y conserva la relación.
+- Los estados de proyecto visibles son: Por iniciar, En curso, En espera del cliente, En revisión, Entregado, Seguimiento, Cerrado y Cancelado.
+- El término comercial genérico es `NFC`; los nombres históricos emitidos permanecen intactos.
+
+## Integridad y sincronización
+
+La persistencia sigue usando el estado del espacio de trabajo y su sincronización autenticada con Supabase. La política existente concede `select`, `insert`, `update` y `delete` a miembros autenticados y valida la pertenencia por espacio de trabajo. No se usa `service_role` en el navegador.
+
 ## Estructura del frontend
 
 - `public/gestion/js/core.js`: modelo, migración local, cálculos y persistencia.
