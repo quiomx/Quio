@@ -3,8 +3,9 @@ window.QuioCore=(()=>{
   const KEY='quio_management_v1';
   const PRE_V8_BACKUP_KEY='quio_management_pre_v8_backup';
   const PRE_V9_BACKUP_KEY='quio_management_pre_v9_backup';
-  const SCHEMA='3.0.0';
-  const ENTITIES=['prospects','clients','businesses','contacts','reviews','quotes','services','packages','projects','documents','activities','deliverables','payments','expenses','timeEntries','inventoryProducts','inventoryMovements','followups','files'];
+  const PRE_V10_BACKUP_KEY='quio_management_pre_v10_backup';
+  const SCHEMA='4.0.0';
+  const ENTITIES=['prospects','clients','businesses','contacts','reviews','quotes','services','packages','projects','documents','financialMovements','activityLog','activities','deliverables','payments','expenses','timeEntries','inventoryProducts','inventoryMovements','followups','files'];
   const now=()=>new Date().toISOString();
   const id=(prefix='q')=>`${prefix}_${crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2)}`;
   const base=(prefix,data={})=>({id:id(prefix),createdAt:now(),updatedAt:now(),status:'active',archived:false,...data});
@@ -24,20 +25,23 @@ window.QuioCore=(()=>{
 
   const defaultPackages=()=>[
     {
-      id:'pkg_esencial',name:'Quio Esencial',price:3990,estimatedHours:2.5,stands:1,nfcCards:1,trips:1,
-      software:0,providers:0,otherCosts:0,status:'Activo',order:1,
-      contents:['Revisión Quio','Informe Quio','Mejora de Google Business y Google Maps','Corrección y optimización de información del perfil','Mejora del proceso para solicitar reseñas','Un stand NFC','Una tarjeta NFC','Guía sencilla de uso','Un traslado promedio']
+      id:'pkg_esencial',name:'Esencial',price:3500,estimatedHours:.5,stands:1,nfcCards:0,trips:1,
+      software:0,providers:0,otherCosts:0,status:'Activo',order:1,color:'#6f4cff',
+      description:'Mejorar la presencia del negocio en Google.',
+      contents:['Revisión Quio','Mejora de Google Business y Google Maps','Corrección de información del perfil','Stand NFC + QR','Guía sencilla de uso']
     },
     {
-      id:'pkg_intermedio',name:'Quio Intermedio',price:6990,estimatedHours:5.5,stands:1,nfcCards:1,trips:1,
-      software:0,providers:0,otherCosts:0,status:'Activo',order:2,
-      contents:['Todo lo incluido en Quio Esencial','Sitio web profesional informativo de una página','Formulario o medio claro de contacto','Botón o enlace de WhatsApp','Publicación inicial en GitHub Pages o equivalente','Configuración inicial del dominio adquirido por el cliente'],
+      id:'pkg_intermedio',name:'Profesional',price:8000,estimatedHours:2,stands:1,nfcCards:0,trips:1,
+      software:0,providers:0,otherCosts:0,status:'Activo',order:2,color:'#149b81',
+      description:'Presencia digital completa con sitio web y conexión de dominio.',
+      contents:['Todo lo incluido en Esencial','Sitio web profesional informativo','Formulario o medio claro de contacto','Botón o enlace de WhatsApp','Publicación inicial','Configuración del dominio adquirido por el cliente'],
       note:'El dominio lo compra y paga directamente el cliente.'
     },
     {
-      id:'pkg_avanzado',name:'Quio Avanzado',price:11990,estimatedHours:8,stands:1,nfcCards:1,trips:1,
-      software:0,providers:0,otherCosts:0,status:'Activo',order:3,
-      contents:['Todo lo incluido en Quio Intermedio','Agenda de citas en línea','Configuración y adaptación del flujo de citas','Quio Control o solución sencilla acordada','Configuración y entrega']
+      id:'pkg_avanzado',name:'Avanzado',price:10000,estimatedHours:3,stands:1,nfcCards:0,trips:1,
+      software:0,providers:0,otherCosts:0,status:'Activo',order:3,color:'#d87920',
+      description:'Facilitar contactos y citas mediante Calendly, Google Calendar y medios digitales de contacto.',
+      contents:['Todo lo incluido en Profesional','Agenda de citas en línea','Configuración de Calendly o Google Calendar','Flujo digital de contacto','Configuración y entrega']
     }
   ].map(p=>({...p,createdAt:now(),updatedAt:now(),archived:false}));
 
@@ -47,23 +51,30 @@ window.QuioCore=(()=>{
       founderEmploymentIncome:22000,totalMonthlyIncomeGoal:40000,hourlyTarget:500,
       standUnitCost:143,nfcCardUnitCost:143,averageTripCost:150,healthyMargin:55,
       warningMargin:45,monthlyCapacityHours:80,effectiveHourlyBasis:'income',taxRate:16,
-      expenseCategories:['Materiales','Software','Transporte','Servicios','Proveedores','Otros'],
+      expenseCategories:['NFC y materiales','Gasolina y traslado','Dominio','Software','Contadora','Publicidad','Papelería','Comisiones','Otros gastos'],
+      incomeCategories:['Anticipo','Liquidación','Pago completo','Ingreso adicional','Otro ingreso'],
+      paymentMethods:['Transferencia','Efectivo','Tarjeta','Otro'],
+      followupTypes:['WhatsApp','Llamada','Correo','Presencial','Otro'],
       inventoryCategories:['Stands','Tarjetas NFC','Elementos QR','Materiales de entrega','Otros'],
       prospectStages:['Nuevo','Contactado','Revisión agendada','Revisión realizada','Propuesta enviada','En decisión','Ganado','No continuó'],
-      projectStatuses:['Por iniciar','En curso','En espera del cliente','En revisión','Entregado','Seguimiento','Cerrado','Cancelado'],
-      activityTemplates:['Confirmar alcance','Solicitar accesos','Implementar mejoras','Revisión interna','Entrega al cliente'],
+      clientStatuses:['Prospecto','Revisión agendada','Revisión realizada','Cotización enviada','Cotización aceptada','Cliente activo','Proyecto en desarrollo','Proyecto entregado','Cliente inactivo','No interesado'],
+      quoteStatuses:['Borrador','Enviada','Aceptada','Rechazada','Vencida','Cancelada'],
+      projectStatuses:['Pendiente de iniciar','En desarrollo','Esperando información','Esperando aprobación','Listo para entregar','Entregado','Terminado','Cancelado'],
+      activityTemplates:['Información recibida','Logo recibido','Contenido recibido','Perfil de Google revisado','Sitio construido','Revisión del cliente','Dominio conectado','NFC configurado','Entrega realizada','Pago liquidado'],
       lowStockThreshold:1,
       quoteValidityDays:15,defaultDepositPct:50,defaultPaymentMethod:'Transferencia',
       defaultAdjustmentRounds:1,defaultSupportDays:15,
       baseTerms:'Los tiempos comienzan cuando Quio recibe la información y los accesos necesarios. Los cambios fuera del alcance se cotizan por separado.',
-      quioResponsible:'',quioEmail:'',quioPhone:'',quioAddress:'',
+      quioResponsible:'',quioLegalName:'',quioRfc:'',quioEmail:'',quioPhone:'',quioWhatsapp:'',quioWebsite:'https://quio.mx',quioAddress:'',quoteFooter:'Gracias por confiar en Quio.',
       showTaxes:true,showDiscounts:true,
-      folioPrefixes:{quote:'COT',serviceOrder:'OS',implementation:'IMP',delivery:'AE',change:'CA'},
-      folioCounters:{quote:1,serviceOrder:1,implementation:1,delivery:1,change:1}
+      folioPrefixes:{quote:'QUIO',serviceOrder:'OS',implementation:'IMP',delivery:'AE',change:'CA'},
+      folioCounters:{quote:1,serviceOrder:1,implementation:1,delivery:1,change:1},
+      accountantMonthly:700,chatgptMonthly:400,domainMonthly:50,fixedMonthlyCosts:1150,
+      nfcPerClient:234,fuelPerClient:100,variablePerClient:334,nfcStock:0
     };
   }
   function emptyDB(){
-    const db={schemaVersion:SCHEMA,createdAt:now(),updatedAt:now(),meta:{demo:false,migratedToV8At:null},settings:defaultSettings(),services:defaultServices,packages:defaultPackages()};
+    const db={schemaVersion:SCHEMA,createdAt:now(),updatedAt:now(),meta:{demo:false,migratedToV8At:null,migratedToV9At:null,migratedToV10At:null},settings:defaultSettings(),services:defaultServices,packages:defaultPackages()};
     ENTITIES.forEach(k=>{if(!db[k])db[k]=[]});
     return db;
   }
@@ -81,20 +92,27 @@ window.QuioCore=(()=>{
   function migrate(raw){
     const source=raw&&typeof raw==='object'?raw:null;
     const previousSchema=source?.schemaVersion||'0.0.0';
-    const wasPreV8=source&&previousSchema!=='2.0.0'&&previousSchema!==SCHEMA;
-    const wasPreV9=source&&previousSchema!==SCHEMA;
+    const major=Number(String(previousSchema).split('.')[0])||0;
+    const wasPreV8=source&&major<2;
+    const wasPreV9=source&&major<3;
+    const wasPreV10=source&&major<4;
     if(wasPreV8&&!localStorage.getItem(PRE_V8_BACKUP_KEY)){
       try{localStorage.setItem(PRE_V8_BACKUP_KEY,JSON.stringify({...source,automaticBackupAt:now()}))}catch(error){console.warn('No fue posible crear el respaldo previo a v8.',error)}
     }
     if(wasPreV9&&!localStorage.getItem(PRE_V9_BACKUP_KEY)){
       try{localStorage.setItem(PRE_V9_BACKUP_KEY,JSON.stringify({...source,automaticBackupAt:now()}))}catch(error){console.warn('No fue posible crear el respaldo previo a v9.',error)}
     }
+    if(wasPreV10&&!localStorage.getItem(PRE_V10_BACKUP_KEY)){
+      try{localStorage.setItem(PRE_V10_BACKUP_KEY,JSON.stringify({...source,automaticBackupAt:now()}))}catch(error){console.warn('No fue posible crear el respaldo previo a v10.',error)}
+    }
     const db={...emptyDB(),...(source||{})};
     ENTITIES.forEach(k=>db[k]=Array.isArray(db[k])?db[k]:[]);
+    const beforeCounts={prospects:db.prospects.length,clients:db.clients.length,businesses:db.businesses.length,followups:db.followups.length,payments:db.payments.length,expenses:db.expenses.length,financialMovements:db.financialMovements.length};
     const inheritedSettings={...(source?.settings||{})};
     if(inheritedSettings.hourlyTarget==null||n(inheritedSettings.hourlyTarget)===350)inheritedSettings.hourlyTarget=500;
     db.settings={...defaultSettings(),...inheritedSettings};
     db.settings.folioPrefixes={...defaultSettings().folioPrefixes,...(inheritedSettings.folioPrefixes||{})};
+    if(db.settings.folioPrefixes.quote==='COT')db.settings.folioPrefixes.quote='QUIO';
     db.settings.folioCounters={...defaultSettings().folioCounters,...(inheritedSettings.folioCounters||{})};
     defaultServices.forEach(service=>{
       const existing=db.services.find(item=>item.name===service.name||item.id===service.id);
@@ -103,11 +121,66 @@ window.QuioCore=(()=>{
       if(n(existing.directCost)===0&&n(service.directCost)>0)existing.directCost=service.directCost;
     });
     const initialPackages=defaultPackages();
-    initialPackages.forEach(pkg=>{if(!db.packages.some(x=>x.id===pkg.id))db.packages.push(pkg)});
+    initialPackages.forEach(pkg=>{
+      const existing=db.packages.find(x=>x.id===pkg.id);
+      if(!existing){db.packages.push(pkg);return}
+      const inheritedDefaults={pkg_esencial:3990,pkg_intermedio:6990,pkg_avanzado:11990};
+      if(wasPreV10&&n(existing.price)===inheritedDefaults[pkg.id])Object.assign(existing,{...pkg,createdAt:existing.createdAt,updatedAt:now()});
+    });
+    const normalize=value=>String(value||'').trim().toLowerCase();
+    const phoneKey=value=>String(value||'').replace(/\D/g,'').slice(-10);
+    const clientStatus=status=>({
+      Activo:'Cliente activo',Inactivo:'Cliente inactivo',Potencial:'Prospecto',Nuevo:'Prospecto',Contactado:'Prospecto',
+      'Revisión agendada':'Revisión agendada','Revisión realizada':'Revisión realizada','Propuesta enviada':'Cotización enviada',
+      'En decisión':'Cotización enviada',Ganado:'Cliente activo','No continuó':'No interesado'
+    }[status]||status||'Prospecto');
+    const findBusiness=name=>db.businesses.find(item=>normalize(item.name)===normalize(name));
+    const findClient=input=>db.clients.find(item=>{
+      const sameEmail=input.email&&item.email&&normalize(input.email)===normalize(item.email);
+      const samePhone=phoneKey(input.phone)&&phoneKey(input.phone)===phoneKey(item.phone);
+      const sameSource=input.id&&item.sourceProspectId===input.id;
+      return sameEmail||samePhone||sameSource;
+    });
+    db.clients.forEach(client=>{
+      const linked=db.businesses.find(business=>(client.businessIds||[]).includes(business.id))||db.businesses.find(business=>business.id===client.businessId);
+      client.status=clientStatus(client.status);
+      client.businessId=client.businessId||linked?.id||'';
+      client.businessName=client.businessName||linked?.name||'';
+      client.industry=client.industry||linked?.industry||'';
+      client.address=client.address||linked?.address||'';
+      client.mapsUrl=client.mapsUrl||linked?.mapsUrl||'';
+      client.websiteUrl=client.websiteUrl||linked?.websiteUrl||'';
+      client.whatsapp=client.whatsapp||client.phone||linked?.phone||'';
+      client.source=client.source||'Registro existente';
+      client.registeredAt=client.registeredAt||client.createdAt||now();
+    });
+    db.prospects.forEach(prospect=>{
+      let business=findBusiness(prospect.businessName);
+      if(!business){business=base('biz',{name:prospect.businessName||'Negocio sin nombre',industry:prospect.industry||'',phone:prospect.phone||'',email:prospect.email||'',status:'Prospecto',sourceProspectId:prospect.id});db.businesses.push(business)}
+      let client=findClient(prospect);
+      if(!client){
+        client=base('cli',{name:prospect.contactName||`Contacto de ${prospect.businessName||'negocio'}`,businessId:business.id,businessIds:[business.id],businessName:business.name,phone:prospect.phone||'',whatsapp:prospect.phone||'',email:prospect.email||'',industry:prospect.industry||business.industry||'',source:prospect.source||'Prospecto migrado',status:clientStatus(prospect.stage),registeredAt:prospect.createdAt||now(),nextFollowup:prospect.nextFollowup||'',notes:prospect.notes||'',sourceProspectId:prospect.id});
+        db.clients.push(client);
+      }else{
+        client.businessId=client.businessId||business.id;client.businessIds=[...new Set([...(client.businessIds||[]),business.id])];
+        client.businessName=client.businessName||business.name;client.status=clientStatus(prospect.stage||client.status);client.sourceProspectId=client.sourceProspectId||prospect.id;
+      }
+      prospect.migratedClientId=client.id;prospect.migratedAt=prospect.migratedAt||now();prospect.archived=true;
+      db.followups.filter(followup=>followup.prospectId===prospect.id&&!followup.clientId).forEach(followup=>{followup.clientId=client.id;followup.migratedFromProspectId=prospect.id});
+    });
+    const hasMovement=(sourceType,sourceId)=>db.financialMovements.some(item=>item.sourceType===sourceType&&item.sourceId===sourceId);
+    db.payments.forEach(payment=>{
+      if(hasMovement('payment',payment.id))return;
+      db.financialMovements.push(base('mov',{date:payment.actualDate||payment.expectedDate||payment.date||now().slice(0,10),movementType:'Ingreso',category:payment.type||'Otro ingreso',clientId:payment.clientId||'',projectId:payment.projectId||'',quoteId:payment.quoteId||'',concept:payment.notes||payment.type||'Ingreso',amount:n(payment.amount),method:payment.method||'',status:payment.status==='Cobrado'?'Pagado':payment.status||'Pendiente',receiptUrl:payment.receiptUrl||'',notes:payment.notes||'',sourceType:'payment',sourceId:payment.id,idempotencyKey:`legacy-payment-${payment.id}`}));
+    });
+    db.expenses.forEach(expense=>{
+      if(hasMovement('expense',expense.id))return;
+      db.financialMovements.push(base('mov',{date:expense.date||now().slice(0,10),movementType:'Gasto',category:expense.category||'Otros gastos',clientId:expense.clientId||'',projectId:expense.projectId||'',quoteId:expense.quoteId||'',concept:expense.notes||expense.category||'Gasto',amount:n(expense.amount),method:expense.method||'',status:['Pagado','Pagada'].includes(expense.status)||!expense.status?'Pagado':expense.status,receiptUrl:expense.receiptUrl||'',notes:expense.notes||'',sourceType:'expense',sourceId:expense.id,idempotencyKey:`legacy-expense-${expense.id}`}));
+    });
     const plusDays=(days=15)=>new Date(Date.now()+Math.max(0,n(days))*86400000).toISOString().slice(0,10);
     db.quotes.forEach((quote,index)=>{
-      quote.folio=quote.folio||`COT-${new Date(quote.createdAt||Date.now()).getFullYear()}-${String(index+1).padStart(4,'0')}`;
-      quote.status=quote.status||'Borrador';
+      quote.folio=quote.folio||`QUIO-${new Date(quote.createdAt||Date.now()).getFullYear()}-${String(index+1).padStart(4,'0')}`;
+      quote.status=quote.status==='Lista para enviar'?'Borrador':quote.status==='Convertida en proyecto'?'Aceptada':quote.status||'Borrador';
       quote.issuedAt=quote.issuedAt||quote.createdAt||now();
       quote.validUntil=quote.validUntil||plusDays(db.settings.quoteValidityDays);
       quote.depositPct=quote.depositPct==null?n(db.settings.defaultDepositPct):n(quote.depositPct);
@@ -125,6 +198,15 @@ window.QuioCore=(()=>{
       document.versions=Array.isArray(document.versions)?document.versions:[];
       document.payload=document.payload&&typeof document.payload==='object'?document.payload:{};
     });
+    const projectStatusMap={'Por iniciar':'Pendiente de iniciar','En curso':'En desarrollo','En espera del cliente':'Esperando información','En revisión':'Esperando aprobación','Seguimiento':'Terminado','Cerrado':'Terminado'};
+    db.projects.forEach(project=>{
+      project.status=projectStatusMap[project.status]||project.status||'Pendiente de iniciar';
+      project.deliveryDate=project.deliveryDate||project.deliveredAt||'';
+      project.siteUrl=project.siteUrl||project.deliverableUrl||'';
+      project.repositoryUrl=project.repositoryUrl||'';
+      project.filesUrl=project.filesUrl||'';
+      project.checklist=Array.isArray(project.checklist)&&project.checklist.length?project.checklist:(db.settings.activityTemplates||[]).map(text=>({text,done:false}));
+    });
     const counterFrom=(prefix,records)=>records.reduce((max,record)=>{
       const match=String(record.folio||'').match(new RegExp(`^${prefix}-\\d{4}-(\\d+)$`));
       return match?Math.max(max,n(match[1])+1):max;
@@ -134,7 +216,10 @@ window.QuioCore=(()=>{
       db.settings.folioCounters[key]=Math.max(n(db.settings.folioCounters[key])||1,counterFrom(db.settings.folioPrefixes[key],db.documents.filter(x=>x.documentType===type)));
     });
     ensureInventory(db);
-    db.meta={demo:false,...(db.meta||{}),migratedToV8At:db.meta?.migratedToV8At||(wasPreV8?now():null),preV8BackupKey:wasPreV8?PRE_V8_BACKUP_KEY:db.meta?.preV8BackupKey,migratedToV9At:db.meta?.migratedToV9At||(wasPreV9?now():null),preV9BackupKey:wasPreV9?PRE_V9_BACKUP_KEY:db.meta?.preV9BackupKey};
+    const afterCounts={clients:db.clients.length,businesses:db.businesses.length,followups:db.followups.length,financialMovements:db.financialMovements.length};
+    const orphanedFollowups=db.followups.filter(item=>!item.clientId&&!item.projectId).length;
+    if(wasPreV10)db.activityLog.unshift(base('act',{action:'Migración V10 completada',entity:'system',detail:`${beforeCounts.prospects} prospectos y ${beforeCounts.payments+beforeCounts.expenses} movimientos históricos procesados.`}));
+    db.meta={demo:false,...(db.meta||{}),migratedToV8At:db.meta?.migratedToV8At||(wasPreV8?now():null),preV8BackupKey:wasPreV8?PRE_V8_BACKUP_KEY:db.meta?.preV8BackupKey,migratedToV9At:db.meta?.migratedToV9At||(wasPreV9?now():null),preV9BackupKey:wasPreV9?PRE_V9_BACKUP_KEY:db.meta?.preV9BackupKey,migratedToV10At:db.meta?.migratedToV10At||(wasPreV10?now():null),preV10BackupKey:wasPreV10?PRE_V10_BACKUP_KEY:db.meta?.preV10BackupKey,v10MigrationReport:db.meta?.v10MigrationReport||(wasPreV10?{ranAt:now(),before:beforeCounts,after:afterCounts,orphanedFollowups}:null)};
     db.schemaVersion=SCHEMA;db.updatedAt=now();return db;
   }
   function load(){try{return migrate(JSON.parse(localStorage.getItem(KEY)||'null'))}catch(e){console.warn('Respaldo local inválido',e);return emptyDB()}}
@@ -148,6 +233,8 @@ window.QuioCore=(()=>{
     const ix=data.id?db[entity].findIndex(x=>x.id===data.id):-1;
     if(ix>=0)db[entity][ix]={...db[entity][ix],...data,updatedAt:now()};
     else db[entity].unshift(base(prefix,data));
+    const record=ix>=0?db[entity][ix]:db[entity][0];
+    if(entity==='payments'||entity==='expenses')mirrorLegacyMovement(entity,record);
     save();return ix>=0?db[entity][ix]:db[entity][0];
   }
   function archive(entity,recordId){const r=get(entity,recordId);if(!r)return false;if(!r.archived)r.statusBeforeArchive=r.status;r.archived=true;r.status='archived';r.updatedAt=now();save();return true}
@@ -203,22 +290,96 @@ window.QuioCore=(()=>{
   }
   function quoteTotals(q){const e=quoteEconomics(q);return{subtotal:e.price,discount:e.discount,beforeTax:e.netPrice,tax:e.taxes,total:e.total,directCost:e.directCost,laborCost:e.labor,economicCost:e.economicCost,profit:e.profit,margin:e.margin}}
   function paymentNet(payment){const amount=n(payment.amount);if(n(payment.taxAmount))return Math.max(0,amount-n(payment.taxAmount));return payment.includesTax?amount/(1+n(payment.taxRate||db.settings.taxRate)/100):amount}
+  function normalizeMovementStatus(status){
+    const value=String(status||'Pendiente').toLowerCase();
+    if(['cobrado','pagado','pagada'].includes(value))return'Pagado';
+    if(value==='parcial')return'Parcial';
+    if(['cancelado','cancelada'].includes(value))return'Cancelado';
+    return'Pendiente';
+  }
+  function mirrorLegacyMovement(entity,record){
+    if(!record?.id)return null;
+    const movementType=entity==='payments'?'Ingreso':'Gasto';
+    const key=`legacy:${entity}:${record.id}`;
+    const data={movementType,sourceType:entity,sourceId:record.id,idempotencyKey:key,clientId:record.clientId||'',projectId:record.projectId||'',quoteId:record.quoteId||'',category:record.category||record.type||(movementType==='Ingreso'?'Venta':'Gasto operativo'),concept:record.concept||record.notes||record.type||record.category||movementType,amount:n(record.amount),status:normalizeMovementStatus(record.status),date:record.actualDate||record.date||record.expectedDate||now().slice(0,10),dueDate:record.expectedDate||record.dueDate||'',paymentMethod:record.method||'',reference:record.reference||'',includesTax:Boolean(record.includesTax),taxAmount:n(record.taxAmount),taxRate:n(record.taxRate||db.settings.taxRate),archived:Boolean(record.archived),demo:Boolean(record.demo)};
+    const ix=db.financialMovements.findIndex(item=>item.idempotencyKey===key);
+    if(ix>=0)db.financialMovements[ix]={...db.financialMovements[ix],...data,updatedAt:now()};
+    else db.financialMovements.unshift(base('mov',data));
+    return ix>=0?db.financialMovements[ix]:db.financialMovements[0];
+  }
+  function upsertFinancialMovement(data){
+    const clean={...data,movementType:data.movementType==='Gasto'?'Gasto':'Ingreso',status:normalizeMovementStatus(data.status),amount:Math.max(0,n(data.amount)),date:data.date||now().slice(0,10)};
+    if(!clean.amount)throw new Error('Captura un monto mayor a cero.');
+    if(clean.idempotencyKey){
+      const duplicate=db.financialMovements.find(item=>item.idempotencyKey===clean.idempotencyKey&&item.id!==clean.id);
+      if(duplicate)return duplicate;
+    }
+    return upsert('financialMovements',clean,'mov');
+  }
+  function movementPaidAmount(movement){
+    if(normalizeMovementStatus(movement.status)==='Pagado')return n(movement.amount);
+    if(normalizeMovementStatus(movement.status)==='Parcial')return Math.min(n(movement.amount),Math.max(0,n(movement.paidAmount)));
+    return 0;
+  }
+  function financialList(filters={}){
+    return list('financialMovements').filter(item=>{
+      if(filters.movementType&&item.movementType!==filters.movementType)return false;
+      if(filters.status&&normalizeMovementStatus(item.status)!==filters.status)return false;
+      if(filters.projectId&&item.projectId!==filters.projectId)return false;
+      if(filters.clientId&&item.clientId!==filters.clientId)return false;
+      if(filters.month&&monthKey(item.date)!==filters.month)return false;
+      return true;
+    });
+  }
+  function financialSummary(month=monthKey()){
+    const rows=financialList({month}).filter(item=>normalizeMovementStatus(item.status)!=='Cancelado');
+    const incomeRows=rows.filter(item=>item.movementType==='Ingreso');
+    const expenseRows=rows.filter(item=>item.movementType==='Gasto');
+    const income=incomeRows.reduce((sum,item)=>sum+movementPaidAmount(item),0);
+    const expenses=expenseRows.reduce((sum,item)=>sum+movementPaidAmount(item),0);
+    const receivable=incomeRows.reduce((sum,item)=>sum+Math.max(0,n(item.amount)-movementPaidAmount(item)),0);
+    const payable=expenseRows.reduce((sum,item)=>sum+Math.max(0,n(item.amount)-movementPaidAmount(item)),0);
+    const paidSales=incomeRows.filter(item=>movementPaidAmount(item)>0);
+    const goal=n(db.settings.monthlyGoal)||18000;
+    return{month,income,expenses,profit:income-expenses,receivable,payable,averageTicket:paidSales.length?income/paidSales.length:0,goal,goalPct:goal?Math.min(100,income/goal*100):0,count:rows.length};
+  }
+  function clientRecord(clientId){
+    const client=get('clients',clientId);if(!client)return null;
+    const business=get('businesses',client.primaryBusinessId||(client.businessIds||[])[0]);
+    return{...business,...client,businessId:business?.id||'',businessName:client.businessName||business?.name||''};
+  }
+  function clientBalance(clientId){
+    const movements=financialList({clientId}).filter(item=>normalizeMovementStatus(item.status)!=='Cancelado');
+    const charged=movements.filter(item=>item.movementType==='Ingreso').reduce((sum,item)=>sum+n(item.amount),0);
+    const paid=movements.filter(item=>item.movementType==='Ingreso').reduce((sum,item)=>sum+movementPaidAmount(item),0);
+    return{charged,paid,pending:Math.max(0,charged-paid)};
+  }
+  function findClientDuplicate(candidate={},excludeId=''){
+    const email=String(candidate.email||'').trim().toLowerCase();
+    const phone=String(candidate.phone||'').replace(/\D/g,'');
+    return list('clients').find(item=>item.id!==excludeId&&((email&&String(item.email||'').trim().toLowerCase()===email)||(phone&&String(item.phone||'').replace(/\D/g,'')===phone)))||null;
+  }
+  function recordActivity(action,entity,record,detail=''){
+    const item=base('act',{action,entity,recordId:record?.id||'',clientId:record?.clientId||(entity==='clients'?record?.id:''),projectId:record?.projectId||(entity==='projects'?record?.id:''),detail});
+    db.activityLog.unshift(item);save();return item;
+  }
   function projectEconomics(projectId){
     const project=get('projects',projectId);if(!project)return null;
     const snapshot=project.financialSnapshot||{};
     const agreedNet=n(snapshot.netPrice||project.agreedNetPrice||project.quotedAmount);
-    const payments=list('payments').filter(x=>x.projectId===projectId&&x.status!=='Cancelado');
-    const collectedGross=payments.filter(x=>x.status==='Cobrado').reduce((s,x)=>s+n(x.amount),0);
-    const collectedNet=payments.filter(x=>x.status==='Cobrado').reduce((s,x)=>s+paymentNet(x),0);
-    const pending=payments.filter(x=>x.status!=='Cobrado').reduce((s,x)=>s+n(x.amount),0);
+    const movements=financialList({projectId}).filter(x=>normalizeMovementStatus(x.status)!=='Cancelado');
+    const payments=movements.filter(x=>x.movementType==='Ingreso');
+    const collectedGross=payments.reduce((s,x)=>s+movementPaidAmount(x),0);
+    const collectedNet=payments.reduce((s,x)=>s+paymentNet({...x,amount:movementPaidAmount(x)}),0);
+    const pending=payments.reduce((s,x)=>s+Math.max(0,n(x.amount)-movementPaidAmount(x)),0);
     const entries=list('timeEntries').filter(x=>x.projectId===projectId);
     const actualHours=entries.reduce((s,x)=>s+n(x.minutes)/60,0);
     const actualLaborCost=entries.reduce((s,x)=>s+n(x.minutes)/60*n(x.hourlyRate||snapshot.hourlyValue||db.settings.hourlyTarget),0);
-    const expenses=list('expenses').filter(x=>x.projectId===projectId);
+    const expenses=movements.filter(x=>x.movementType==='Gasto');
     const actualExpenses=expenses.reduce((s,x)=>s+n(x.amount),0);
-    const paidExpenses=expenses.filter(x=>!x.status||x.status==='Pagado'||x.status==='Pagada').reduce((s,x)=>s+n(x.amount),0);
-    const movements=list('inventoryMovements').filter(x=>x.projectId===projectId&&n(x.quantity)<0);
-    const actualMaterials=movements.reduce((s,x)=>s+Math.abs(n(x.quantity))*n(x.unitCostSnapshot),0);
+    const paidExpenses=expenses.reduce((s,x)=>s+movementPaidAmount(x),0);
+    const inventoryUsage=list('inventoryMovements').filter(x=>x.projectId===projectId&&n(x.quantity)<0);
+    const actualMaterials=inventoryUsage.reduce((s,x)=>s+Math.abs(n(x.quantity))*n(x.unitCostSnapshot),0);
     const actualDirectCost=actualExpenses+actualMaterials;
     const actualEconomicCost=actualLaborCost+actualDirectCost;
     const recognizedNet=Math.min(agreedNet||collectedNet,collectedNet);
@@ -236,11 +397,11 @@ window.QuioCore=(()=>{
 
   function calculations(){
     const mk=monthKey();
-    const paid=list('payments').filter(p=>p.status==='Cobrado'&&monthKey(p.actualDate||p.date)===mk);
-    const expenses=list('expenses').filter(x=>monthKey(x.date)===mk&&(!x.status||x.status==='Pagado'||x.status==='Pagada'));
+    const financial=financialSummary(mk);
+    const paid=financialList({month:mk,movementType:'Ingreso'}).filter(item=>movementPaidAmount(item)>0);
     const times=list('timeEntries').filter(x=>monthKey(x.date)===mk);
-    const income=paid.reduce((s,x)=>s+n(x.amount),0),incomeNet=paid.reduce((s,x)=>s+paymentNet(x),0),spent=expenses.reduce((s,x)=>s+n(x.amount),0),hours=times.reduce((s,x)=>s+n(x.minutes)/60,0);
-    const receivable=list('payments').filter(p=>p.status!=='Cobrado'&&p.status!=='Cancelado').reduce((s,x)=>s+n(x.amount),0);
+    const income=financial.income,incomeNet=paid.reduce((s,x)=>s+paymentNet({...x,amount:movementPaidAmount(x)}),0),spent=financial.expenses,hours=times.reduce((s,x)=>s+n(x.minutes)/60,0);
+    const receivable=financial.receivable;
     const projectResults=list('projects').map(p=>projectEconomics(p.id)).filter(Boolean);
     const estimatedProfit=projectResults.reduce((s,x)=>s+x.estimatedProfit,0),actualProfit=projectResults.reduce((s,x)=>s+x.actualProfit,0);
     const margins=projectResults.filter(x=>x.recognizedNet>0).map(x=>x.actualMargin);
@@ -248,7 +409,7 @@ window.QuioCore=(()=>{
     const signals=projectResults.map(x=>marginSignal(x.actualMargin));
     const goal=n(db.settings.monthlyGoal)||18000,totalGoal=n(db.settings.totalMonthlyIncomeGoal)||40000,employment=n(db.settings.founderEmploymentIncome)||22000;
     const effectiveBase=db.settings.effectiveHourlyBasis==='profit'?actualProfit:incomeNet;
-    return{income,incomeNet,spent,net:income-spent,hours,effectiveHourly:hours?effectiveBase/hours:0,receivable,goal,goalPct:Math.min(100,incomeNet/goal*100),estimatedProfit,actualProfit,marginAverage,greenProjects:signals.filter(x=>x.tone==='green').length,amberProjects:signals.filter(x=>x.tone==='amber').length,redProjects:signals.filter(x=>x.tone==='red').length,averageTicket:paid.length?incomeNet/paid.length:0,totalPersonalIncome:employment+incomeNet,totalGoal,totalGoalPct:Math.min(100,(employment+incomeNet)/totalGoal*100),packagesSold:list('projects').filter(p=>p.packageId).length};
+    return{income,incomeNet,spent,net:income-spent,hours,effectiveHourly:hours?effectiveBase/hours:0,receivable,goal,goalPct:Math.min(100,income/goal*100),estimatedProfit,actualProfit:income-spent,projectActualProfit:actualProfit,marginAverage,greenProjects:signals.filter(x=>x.tone==='green').length,amberProjects:signals.filter(x=>x.tone==='amber').length,redProjects:signals.filter(x=>x.tone==='red').length,averageTicket:financial.averageTicket,totalPersonalIncome:employment+income,totalGoal,totalGoalPct:Math.min(100,(employment+income)/totalGoal*100),packagesSold:list('projects').filter(p=>p.packageId).length};
   }
   function projection(mix={}){
     let projects=0,revenue=0,hours=0,directCost=0,economicCost=0,profit=0,trips=0,stands=0,nfcCards=0;
@@ -274,5 +435,5 @@ window.QuioCore=(()=>{
     upsert('followups',{clientId:customer.id,date:new Date(Date.now()-86400000).toISOString().slice(0,10),reason:'Confirmar accesos',channel:'WhatsApp',status:'Pendiente',demo:true},'fol');
     save();return db;
   }
-  return{KEY,PRE_V8_BACKUP_KEY,PRE_V9_BACKUP_KEY,SCHEMA,ENTITIES,now,id,base,db:()=>db,save,list,get,upsert,archive,restore,replace,merge,money,date,monthKey,round,estimate,packageCost,marginSignal,financialSnapshot,quoteEconomics,quoteTotals,projectEconomics,projectProfit,calculations,projection,paymentNet,validateV50,importReview,seed,emptyDB,migrate};
+  return{KEY,PRE_V8_BACKUP_KEY,PRE_V9_BACKUP_KEY,PRE_V10_BACKUP_KEY,SCHEMA,ENTITIES,now,id,base,db:()=>db,save,list,get,upsert,archive,restore,replace,merge,money,date,monthKey,round,estimate,packageCost,marginSignal,financialSnapshot,quoteEconomics,quoteTotals,projectEconomics,projectProfit,calculations,projection,paymentNet,normalizeMovementStatus,upsertFinancialMovement,movementPaidAmount,financialList,financialSummary,clientRecord,clientBalance,findClientDuplicate,recordActivity,validateV50,importReview,seed,emptyDB,migrate};
 })();

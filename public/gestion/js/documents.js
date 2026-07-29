@@ -171,7 +171,7 @@ window.QuioDocuments=(()=>{
     if(!TYPES[type])throw new Error('Tipo de documento no válido.');
     const refs=referencesFrom(input);
     const quote=C.get('quotes',refs.quotationId);
-    if(type==='serviceOrder'&&!/^(Aceptada|Convertida en proyecto)$/.test(String(quote?.status||''))&&!input.allowException)throw new Error('La cotización debe estar aceptada antes de generar la orden de servicio.');
+    if(type==='serviceOrder'&&quote?.status!=='Aceptada'&&!input.allowException)throw new Error('La cotización debe estar aceptada antes de generar la orden de servicio.');
     const existing=C.list('documents').find(item=>item.documentType===type&&((refs.projectId&&item.projectId===refs.projectId)||(refs.quotationId&&item.quotationId===refs.quotationId))&&!['Cancelada','Cancelado'].includes(item.status));
     if(existing&&!input.allowDuplicate)return existing;
     const status=type==='implementation'?'Incompleto':'Borrador';
@@ -266,13 +266,16 @@ window.QuioDocuments=(()=>{
     if(!quote)throw new Error('No se encontró la cotización.');
     const patch={id,status,history:[...(quote.history||[]),historyEntry('Cambio de estado',status)]};
     if(status==='Aceptada')patch.acceptedAt=C.now();
-    if(['Lista para enviar','Enviada','Aceptada'].includes(status))patch.snapshot=quote.snapshot||snapshotFor({clientId:quote.clientId,businessId:quote.businessId,reviewId:quote.reviewId,quotationId:quote.id});
-    return C.upsert('quotes',patch,'quo');
+    if(['Enviada','Aceptada'].includes(status))patch.snapshot=quote.snapshot||snapshotFor({clientId:quote.clientId,businessId:quote.businessId,reviewId:quote.reviewId,quotationId:quote.id});
+    const saved=C.upsert('quotes',patch,'quo');
+    if(status==='Aceptada'&&quote.clientId)C.upsert('clients',{id:quote.clientId,status:'Cotización aceptada'});
+    C.recordActivity('Estado de cotización','quotes',saved,`${quote.folio}: ${status}`);
+    return saved;
   }
   function projectFromQuote(id){
     const q=C.get('quotes',id);
     if(!q)throw new Error('No se encontró la cotización.');
-    if(q.status!=='Aceptada'&&q.status!=='Convertida en proyecto')throw new Error('Solo una cotización aceptada puede convertirse en proyecto.');
+    if(q.status!=='Aceptada')throw new Error('Solo una cotización aceptada puede convertirse en proyecto.');
     const existing=C.list('projects').find(project=>project.quoteId===q.id);
     if(existing)return existing;
     const totals=C.quoteTotals(q);
@@ -280,12 +283,12 @@ window.QuioDocuments=(()=>{
     const deliverables=[...(q.items||[]),...(q.extras||[])].map(item=>({text:item.description,done:false}));
     const project=C.upsert('projects',{
       name:`Proyecto ${C.get('businesses',q.businessId)?.name||q.folio}`,clientId:q.clientId,businessId:q.businessId,reviewId:q.reviewId||'',
-      quoteId:q.id,packageId:q.packageId,financialSnapshot:clone(snapshot),agreedNetPrice:snapshot.netPrice,status:'Por iniciar',progress:0,
+      quoteId:q.id,packageId:q.packageId,financialSnapshot:clone(snapshot),agreedNetPrice:snapshot.netPrice,status:'Pendiente de iniciar',progress:0,
       deliverables,checklist:deliverables.length?clone(deliverables):(C.db().settings.activityTemplates||[]).map(text=>({text,done:false})),
       nextStep:'Generar y aceptar orden de servicio'
     },'prj');
     C.list('documents').filter(document=>document.quotationId===q.id&&!document.projectId).forEach(document=>C.upsert('documents',{id:document.id,projectId:project.id}));
-    setQuoteStatus(q.id,'Convertida en proyecto');
+    if(q.clientId)C.upsert('clients',{id:q.clientId,status:'Proyecto en curso'});
     return project;
   }
   function closeProject(projectId){
@@ -293,7 +296,7 @@ window.QuioDocuments=(()=>{
     if(!project)throw new Error('No se encontró el proyecto.');
     const act=C.list('documents').find(doc=>doc.projectId===projectId&&doc.documentType==='delivery'&&ACCEPTED.delivery.includes(doc.status));
     const unfinished=(project.checklist||[]).filter(item=>!item.done);
-    const pendingPayments=C.list('payments').filter(payment=>payment.projectId===projectId&&!['Cobrado','Cancelado'].includes(payment.status));
+    const pendingPayments=C.financialList({projectId,movementType:'Ingreso'}).filter(payment=>!['Pagado','Cancelado'].includes(C.normalizeMovementStatus(payment.status)));
     if(!act)throw new Error('Primero registra la aceptación del acta de entrega.');
     if(unfinished.length)throw new Error(`Faltan ${unfinished.length} entregable(s) por completar.`);
     if(pendingPayments.length)throw new Error(`Hay ${pendingPayments.length} pago(s) pendiente(s). Registra o cancela el saldo antes de cerrar.`);
@@ -302,10 +305,10 @@ window.QuioDocuments=(()=>{
   function chargeChange(id){
     const document=C.get('documents',id);
     if(!document||document.documentType!=='change'||document.status!=='Autorizado')throw new Error('El cambio debe estar autorizado.');
-    if(document.payload.financeChargeId)return C.get('payments',document.payload.financeChargeId);
+    if(document.payload.financeChargeId)return C.get('financialMovements',document.payload.financeChargeId);
     const amount=Number(document.payload.additionalCost)||0;
     if(!amount)throw new Error('El cambio no tiene costo adicional.');
-    const payment=C.upsert('payments',{clientId:document.clientId,projectId:document.projectId,type:`Cambio adicional ${document.folio}`,amount,status:'Pendiente',expectedDate:document.payload.newEstimatedDate||today(),includesTax:false,notes:document.payload.requestedChange},'pay');
+    const payment=C.upsertFinancialMovement({movementType:'Ingreso',clientId:document.clientId,projectId:document.projectId,concept:`Cambio adicional ${document.folio}`,category:'Venta de servicio',amount,status:'Pendiente',dueDate:document.payload.newEstimatedDate||today(),date:today(),notes:document.payload.requestedChange,idempotencyKey:`change:${document.id}`});
     updateDocument(id,{payload:{...document.payload,financeChargeId:payment.id}},'Cargo confirmado en Finanzas');
     return payment;
   }
@@ -329,7 +332,7 @@ window.QuioDocuments=(()=>{
     const defaultValidity=record.validUntil||plusDays(settings.quoteValidityDays);
     return`<div class="form-section full"><h3>Relaciones</h3><p class="helper">Selecciona registros existentes; Quio reutilizará sus datos.</p></div>
       ${field('folio','Folio',record.folio||nextFolio('quote',false),'text',true)}
-      ${select('status','Estado',['Borrador','Lista para enviar','Enviada','Aceptada','Rechazada','Vencida','Cancelada','Convertida en proyecto'],record.status||'Borrador',true)}
+      ${select('status','Estado',['Borrador','Enviada','Aceptada','Rechazada','Vencida','Cancelada'],record.status||'Borrador',true)}
       ${select('packageId','Paquete de origen',[{value:'',label:'Cotización personalizada'},...entityOptions('packages').slice(1)],record.packageId||'')}
       ${select('reviewId','Revisión Quio',entityOptions('reviews','folio').map(option=>option.value?{value:option.value,label:`Revisión · ${C.get('reviews',option.value)?.iqpd??'—'}/100`}:option),record.reviewId||'')}
       ${select('clientId','Cliente',entityOptions('clients'),record.clientId||'',true)}
@@ -371,12 +374,11 @@ window.QuioDocuments=(()=>{
           <button class="btn small" data-quote="${quote.id}">Vista previa</button>
           <button class="btn small" data-edit="quotes:${quote.id}">Editar</button>
           <button class="btn small" data-quote-duplicate="${quote.id}">Duplicar</button>
-          ${quote.status==='Borrador'?`<button class="btn small" data-quote-status="${quote.id}:Lista para enviar">Lista</button>`:''}
-          ${['Lista para enviar','Borrador'].includes(quote.status)?`<button class="btn small" data-quote-status="${quote.id}:Enviada">Enviada</button>`:''}
-          ${['Enviada','Lista para enviar'].includes(quote.status)?`<button class="btn small primary" data-quote-status="${quote.id}:Aceptada">Aceptar</button>`:''}
-          ${['Enviada','Lista para enviar'].includes(quote.status)?`<button class="btn small" data-quote-status="${quote.id}:Rechazada">Rechazar</button>`:''}
+          ${quote.status==='Borrador'?`<button class="btn small" data-quote-status="${quote.id}:Enviada">Enviar</button>`:''}
+          ${quote.status==='Enviada'?`<button class="btn small primary" data-quote-status="${quote.id}:Aceptada">Aceptar</button>`:''}
+          ${quote.status==='Enviada'?`<button class="btn small" data-quote-status="${quote.id}:Rechazada">Rechazar</button>`:''}
           ${quote.status==='Aceptada'&&!hasProject?`<button class="btn small primary" data-project-from="${quote.id}">Crear proyecto</button>`:''}
-          ${['Aceptada','Convertida en proyecto'].includes(quote.status)&&!hasOrder?`<button class="btn small" data-order-from-quote="${quote.id}">Orden de servicio</button>`:''}
+          ${quote.status==='Aceptada'&&!hasOrder?`<button class="btn small" data-order-from-quote="${quote.id}">Orden de servicio</button>`:''}
         </div></div>`;
       }).join(''):empty('Aún no hay cotizaciones.','Crea la primera a partir de un cliente, revisión o paquete.')}</article></section>`;
   }
@@ -461,11 +463,11 @@ window.QuioDocuments=(()=>{
   function alerts(){
     const result=[];
     const soon=plusDays(5);
-    C.list('quotes').filter(quote=>['Enviada','Lista para enviar'].includes(quote.status)&&quote.validUntil&&quote.validUntil<=soon).forEach(quote=>result.push({title:'Cotización por vencer',detail:quote.folio,route:'quotes',tone:'amber',icon:'◇'}));
+    C.list('quotes').filter(quote=>quote.status==='Enviada'&&quote.validUntil&&quote.validUntil<=soon).forEach(quote=>result.push({title:'Cotización por vencer',detail:quote.folio,route:'quotes',tone:'amber',icon:'◇'}));
     C.list('quotes').filter(quote=>quote.status==='Aceptada'&&!C.list('projects').some(project=>project.quoteId===quote.id)).forEach(quote=>result.push({title:'Cotización aceptada sin proyecto',detail:quote.folio,route:'quotes',tone:'red',icon:'!'}));
     C.list('documents').forEach(document=>{
       if(document.documentType==='serviceOrder'&&document.status==='Pendiente de aceptación')result.push({title:'Orden pendiente de aceptación',detail:document.folio,route:'documents',tone:'amber',icon:'▣'});
-      if(document.documentType==='serviceOrder'&&document.status==='Aceptada'&&document.projectId&&!C.list('payments').some(payment=>payment.projectId===document.projectId&&payment.type==='Anticipo'&&payment.status==='Cobrado'))result.push({title:'Orden aceptada sin anticipo cobrado',detail:document.folio,route:'finance',tone:'amber',icon:'$'});
+      if(document.documentType==='serviceOrder'&&document.status==='Aceptada'&&document.projectId&&!C.financialList({projectId:document.projectId,movementType:'Ingreso'}).some(payment=>/anticipo/i.test(payment.concept||payment.category||'')&&C.normalizeMovementStatus(payment.status)==='Pagado'))result.push({title:'Orden aceptada sin anticipo cobrado',detail:document.folio,route:'finance',tone:'amber',icon:'$'});
       if(document.documentType==='implementation'&&document.status!=='Completo')result.push({title:'Información de implementación incompleta',detail:`${document.folio} · ${document.payload?.completionPercentage||0}%`,route:'documents',tone:'amber',icon:'◫'});
       if(document.documentType==='delivery'&&document.status==='Pendiente de aceptación')result.push({title:'Acta pendiente de aceptación',detail:document.folio,route:'documents',tone:'amber',icon:'✓'});
       if(document.documentType==='change'&&document.status==='Pendiente de autorización')result.push({title:'Cambio pendiente de autorización',detail:document.folio,route:'documents',tone:'red',icon:'↻'});
@@ -610,7 +612,7 @@ window.QuioDocuments=(()=>{
     $('#recordDialog').showModal();
   }
   function printHeader(title,folio,version){
-    return`<header class="commercial-header"><div class="commercial-brand"><span class="brand-mark"></span><div><strong>quio</strong><small>Presencia digital clara para negocios locales</small></div></div><div><p>${esc(title)}</p><strong>${esc(folio)}</strong><small>Versión ${version||1} · ${C.date(new Date())}</small></div></header>`;
+    return`<header class="commercial-header"><div class="commercial-brand"><span class="document-logo-crop"><img src="assets/images/logo-quio.png" alt="Quio"></span><div><small>Presencia digital clara para negocios locales</small></div></div><div><p>${esc(title)}</p><strong>${esc(folio)}</strong><small>Versión ${version||1} · ${C.date(new Date())}</small></div></header>`;
   }
   function printCurrent(filename){
     const previous=document.title;
@@ -631,7 +633,7 @@ window.QuioDocuments=(()=>{
       <tr><td colspan="3">Subtotal</td><td>${C.money(totals.subtotal)}</td></tr>
       ${settings.showDiscounts!==false&&totals.discount?`<tr><td colspan="3">Descuento</td><td>−${C.money(totals.discount)}</td></tr>`:''}
       ${settings.showTaxes!==false?`<tr><td colspan="3">Impuestos</td><td>${C.money(totals.tax)}</td></tr>`:''}
-      <tr><th colspan="3">Total</th><th>${C.money(totals.total)}</th></tr></tfoot></table></section>
+      <tr><th colspan="3">Total</th><th>${C.money(totals.total)} MXN</th></tr></tfoot></table></section>
       <section class="commercial-grid"><div><small>ANTICIPO</small><strong>${C.money(quote.depositAmount??totals.total*Number(quote.depositPct||0)/100)}</strong><span>${Number(quote.depositPct||0)}%</span></div><div><small>SALDO</small><strong>${C.money(quote.balanceAmount??totals.total*(1-Number(quote.depositPct||0)/100))}</strong></div><div><small>FORMA DE PAGO</small><strong>${esc(quote.paymentMethod||settings.defaultPaymentMethod)}</strong></div><div><small>IMPLEMENTACIÓN</small><strong>${esc(quote.implementationTime||'Por acordar')}</strong></div></section>
       <section class="commercial-two"><div><h3>Información necesaria</h3><p>${esc(quote.clientNeeds||'Información, materiales y accesos autorizados relacionados con el alcance.')}</p></div><div><h3>Vigencia</h3><p>Esta propuesta es válida hasta el ${C.date(quote.validUntil)}.</p></div></section>
       <section class="commercial-two"><div><h3>Condiciones</h3><p>${esc(quote.conditions||settings.baseTerms)}</p></div><div><h3>No incluido</h3><p>${esc(quote.exclusions||'Cualquier servicio no descrito en los entregables.')}</p></div></section>
@@ -674,7 +676,7 @@ window.QuioDocuments=(()=>{
     const quote=C.get('quotes',id);
     if(!quote)return;
     if(print){
-      if(!quote.snapshot&&['Lista para enviar','Enviada','Aceptada','Convertida en proyecto'].includes(quote.status))C.upsert('quotes',{id:quote.id,snapshot:snapshotFor({clientId:quote.clientId,businessId:quote.businessId,reviewId:quote.reviewId,quotationId:quote.id}),pdfGeneratedAt:C.now(),history:[...(quote.history||[]),historyEntry('PDF generado')]});
+      if(!quote.snapshot&&['Enviada','Aceptada'].includes(quote.status))C.upsert('quotes',{id:quote.id,snapshot:snapshotFor({clientId:quote.clientId,businessId:quote.businessId,reviewId:quote.reviewId,quotationId:quote.id}),pdfGeneratedAt:C.now(),history:[...(quote.history||[]),historyEntry('PDF generado')]});
     }
     $('#recordForm').dataset.kind='read-only';
     $('#dialogTitle').textContent=`Cotización ${quote.folio}`;
@@ -703,7 +705,7 @@ window.QuioDocuments=(()=>{
     $('#recordForm').dataset.id='';
     $('#recordForm').dataset.documentType=type;
     $('#dialogTitle').textContent=`Nueva ${TYPES[type].label.toLowerCase()}`;
-    const source=type==='serviceOrder'?select('quotationId','Cotización',entityOptions('quotes','folio').filter(option=>!option.value||['Aceptada','Convertida en proyecto'].includes(C.get('quotes',option.value)?.status)),'',true):select('projectId','Proyecto',entityOptions('projects'),'',true);
+    const source=type==='serviceOrder'?select('quotationId','Cotización',entityOptions('quotes','folio').filter(option=>!option.value||C.get('quotes',option.value)?.status==='Aceptada'),'',true):select('projectId','Proyecto',entityOptions('projects'),'',true);
     $('#dialogBody').innerHTML=`<div class="form-grid">${source}</div>`;
     $('#dialogSave').textContent='Continuar';
     $('#recordDialog').showModal();

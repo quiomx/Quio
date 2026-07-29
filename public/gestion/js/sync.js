@@ -20,7 +20,7 @@
     let gate=document.querySelector('#cloudAuthGate');
     if(!gate){gate=document.createElement('div');gate.id='cloudAuthGate';gate.className='auth-gate';document.body.appendChild(gate)}
     gate.innerHTML=`<form class="auth-card" id="cloudLogin">
-      <div class="auth-brand"><span></span><strong>quio</strong></div>
+      <div class="auth-brand auth-logo"><span class="logo-crop"><img src="assets/images/logo-quio.png" alt="Quio"></span></div>
       <p class="eyebrow">ESPACIO DE TRABAJO</p><h1>Accede a Gestión Quio</h1>
       <p>Tu información se sincroniza con las personas autorizadas.</p>
       ${message?`<div class="auth-message" role="alert">${escapeHtml(message)}</div>`:''}
@@ -48,7 +48,7 @@
   }
   function recoveryScreen(){
     let gate=document.querySelector('#cloudAuthGate');if(!gate){gate=document.createElement('div');gate.id='cloudAuthGate';gate.className='auth-gate';document.body.appendChild(gate)}
-    gate.innerHTML=`<form class="auth-card" id="cloudRecovery"><div class="auth-brand"><span></span><strong>quio</strong></div><p class="eyebrow">NUEVA CONTRASEÑA</p><h1>Protege tu cuenta</h1><label>Contraseña nueva<input name="password" type="password" autocomplete="new-password" minlength="8" required></label><button class="btn primary" type="submit">Guardar contraseña</button></form>`;
+    gate.innerHTML=`<form class="auth-card" id="cloudRecovery"><div class="auth-brand auth-logo"><span class="logo-crop"><img src="assets/images/logo-quio.png" alt="Quio"></span></div><p class="eyebrow">NUEVA CONTRASEÑA</p><h1>Protege tu cuenta</h1><label>Contraseña nueva<input name="password" type="password" autocomplete="new-password" minlength="8" required></label><button class="btn primary" type="submit">Guardar contraseña</button></form>`;
     gate.querySelector('form').onsubmit=async event=>{event.preventDefault();const password=new FormData(event.currentTarget).get('password'),{error}=await client.auth.updateUser({password});if(error)authScreen('No fue posible guardar la contraseña.');else{hideAuth();notice('Contraseña actualizada.')}};
   }
   function hideAuth(){document.querySelector('#cloudAuthGate')?.remove()}
