@@ -5,7 +5,7 @@ window.QuioOperations=(()=>{
   const $$=selector=>[...document.querySelectorAll(selector)];
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const today=()=>new Date().toISOString().slice(0,10);
-  let clientQuery='',clientStatus='',clientFollowup='',financeTab='movements',settingsTab='quio';
+  let clientQuery='',clientStatus='',clientFollowup='',financeTab='movements',settingsTab='quio',clientDelegationBound=false;
   const badge=(value,tone='')=>`<span class="badge ${tone||statusTone(value)}">${esc(value||'Sin estado')}</span>`;
   const statusTone=value=>/venc|rechaz|cancel|bloquead/i.test(value||'')?'red':/pagad|aceptad|complet|activo|ganad/i.test(value||'')?'green':/pend|parcial|espera|prospect|contact/i.test(value||'')?'amber':'';
   const metric=(label,value,note='',tone='')=>`<article class="metric operational-metric ${tone}"><span>${esc(label)}</span><strong>${value}</strong>${note?`<small>${esc(note)}</small>`:''}</article>`;
@@ -22,8 +22,8 @@ window.QuioOperations=(()=>{
     const summary=C.financialSummary(),now=today(),soon=new Date(Date.now()+7*86400000).toISOString().slice(0,10);
     const clients=C.list('clients'),quotes=C.list('quotes'),projects=C.list('projects');
     const overdue=C.list('followups').filter(item=>item.status==='Pendiente'&&item.date&&item.date<now);
-    const deliveries=projects.filter(item=>item.dueDate&&item.dueDate>=now&&item.dueDate<=soon&&!['Completado','Cancelado'].includes(item.status));
-    const activeProjects=projects.filter(item=>!['Completado','Cancelado'].includes(item.status));
+    const deliveries=projects.filter(item=>item.dueDate&&item.dueDate>=now&&item.dueDate<=soon&&!['Cerrado','Cancelado'].includes(item.status));
+    const activeProjects=projects.filter(item=>!['Cerrado','Cancelado'].includes(item.status));
     const pendingQuotes=quotes.filter(item=>['Borrador','Enviada'].includes(item.status));
     const months=[...Array(6)].map((_,index)=>{const date=new Date();date.setMonth(date.getMonth()-(5-index));return C.monthKey(date)});
     const series=months.map(month=>C.financialSummary(month)),max=Math.max(1,...series.flatMap(item=>[item.income,item.expenses]));
@@ -70,20 +70,24 @@ window.QuioOperations=(()=>{
       return true;
     });
   }
+  function clientRowsMarkup(rows=filteredClients()){
+    return rows.length?rows.map(item=>{
+      const record=C.clientRecord(item.id),balance=C.clientBalance(item.id);
+      const next=C.list('followups').filter(row=>row.clientId===item.id&&row.status==='Pendiente').sort((a,b)=>String(a.date).localeCompare(String(b.date)))[0];
+      return`<button class="client-row" data-client-detail="${item.id}"><span class="client-avatar">${esc((item.name||'?').slice(0,1).toUpperCase())}</span><span><strong>${esc(item.name)}</strong><small>${esc(record?.businessName||'Sin negocio')} · ${esc(item.phone||item.email||'Sin contacto')}</small></span><span>${badge(item.status)}</span><span><strong>${C.money(balance.pending)}</strong><small>pendiente</small></span><span><strong>${next?C.date(next.date):'Al día'}</strong><small>${esc(next?.reason||'sin seguimiento')}</small></span><span aria-hidden="true">→</span></button>`;
+    }).join(''):empty('No encontramos clientes','Prueba otros filtros o crea un nuevo registro.');
+  }
   function renderClients(app){
-    const rows=filteredClients(),statuses=C.db().settings.clientStatuses||[];
-    app.innerHTML=`<section class="page operational-page">${head('Clientes','Prospectos, clientes, negocios y seguimientos en una sola vista.','<button class="btn primary" data-new="client">+ Cliente</button>')}
+    const statuses=C.db().settings.clientStatuses||[];
+    app.innerHTML=`<section class="page operational-page">${head('Clientes','Prospectos, clientes, negocios y seguimientos en una sola vista.','<button class="btn primary btn-primary" data-new="client">+ Cliente</button>')}
       <article class="panel filter-panel"><div class="client-filters">
         <label class="filter-search"><span>Buscar</span><input id="clientQuery" value="${esc(clientQuery)}" placeholder="Nombre, negocio, teléfono o correo"></label>
         <label><span>Estado</span><select id="clientStatus"><option value="">Todos</option>${statuses.map(value=>`<option ${value===clientStatus?'selected':''}>${esc(value)}</option>`).join('')}</select></label>
         <label><span>Seguimiento</span><select id="clientFollowup"><option value="">Todos</option><option value="overdue" ${clientFollowup==='overdue'?'selected':''}>Vencido</option><option value="upcoming" ${clientFollowup==='upcoming'?'selected':''}>Próximo</option><option value="none" ${clientFollowup==='none'?'selected':''}>Sin seguimiento</option></select></label>
       </div></article>
-      <article class="panel">${rows.length?rows.map(item=>{
-        const record=C.clientRecord(item.id),balance=C.clientBalance(item.id);
-        const next=C.list('followups').filter(row=>row.clientId===item.id&&row.status==='Pendiente').sort((a,b)=>String(a.date).localeCompare(String(b.date)))[0];
-        return`<button class="client-row" data-client-detail="${item.id}"><span class="client-avatar">${esc((item.name||'?').slice(0,1).toUpperCase())}</span><span><strong>${esc(item.name)}</strong><small>${esc(record?.businessName||'Sin negocio')} · ${esc(item.phone||item.email||'Sin contacto')}</small></span><span>${badge(item.status)}</span><span><strong>${C.money(balance.pending)}</strong><small>pendiente</small></span><span><strong>${next?C.date(next.date):'Al día'}</strong><small>${esc(next?.reason||'sin seguimiento')}</small></span><span aria-hidden="true">→</span></button>`;
-      }).join(''):empty('No encontramos clientes','Prueba otros filtros o crea un nuevo registro.')}</article>
+      <article class="panel" id="clientResults" aria-live="polite">${clientRowsMarkup()}</article>
     </section>`;
+    $('#clientResults').onclick=event=>{const row=event.target.closest('[data-client-detail]');if(row)showClient(row.dataset.clientDetail)};
   }
   function showClient(id){
     const client=C.clientRecord(id);if(!client)return;
@@ -93,7 +97,7 @@ window.QuioOperations=(()=>{
     const projects=C.list('projects').filter(item=>item.clientId===id);
     const followups=C.list('followups',{includeArchived:true}).filter(item=>item.clientId===id).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
     const activities=C.list('activityLog').filter(item=>item.clientId===id).slice(0,10);
-    const dialog=$('#recordDialog');$('#recordForm').dataset.kind='read-only';$('#dialogTitle').textContent=client.name;
+    const dialog=$('#recordDialog');dialog.returnFocus=document.activeElement;$('#recordForm').dataset.kind='read-only';$('#dialogTitle').textContent=client.name;
     $('#dialogBody').innerHTML=`<div class="client-detail-head"><div><p class="eyebrow">${esc(client.status||'CLIENTE')}</p><h3>${esc(client.businessName||'Sin negocio')}</h3><p>${esc(client.phone||'Sin teléfono')} · ${esc(client.email||'Sin correo')}</p></div><div class="client-balance"><span>Saldo pendiente</span><strong>${C.money(balance.pending)}</strong></div></div>
       <div class="toolbar client-actions">
         <button type="button" class="btn" data-client-action="edit:${id}">Editar</button>
@@ -101,7 +105,7 @@ window.QuioOperations=(()=>{
         <button type="button" class="btn" data-client-action="quote:${id}">Cotización</button>
         <button type="button" class="btn" data-client-action="project:${id}">Proyecto</button>
         <button type="button" class="btn" data-client-action="payment:${id}">Registrar pago</button>
-        ${client.phone?`<a class="btn primary" target="_blank" rel="noopener" href="https://wa.me/${String(client.phone).replace(/\D/g,'')}">WhatsApp</a>`:''}
+        <button type="button" class="btn primary btn-primary" data-client-action="whatsapp:${id}">WhatsApp</button>
       </div>
       <div class="detail-grid">
         <section><h4>Revisiones (${reviews.length})</h4>${reviews.map(item=>`<p>${C.date(item.reviewDate)} · IQPD <strong>${item.iqpd}/100</strong></p>`).join('')||'<p class="muted">Sin revisiones.</p>'}</section>
@@ -116,7 +120,7 @@ window.QuioOperations=(()=>{
   function renderProjects(app){
     const rows=C.list('projects').sort((a,b)=>String(a.dueDate||'9999').localeCompare(String(b.dueDate||'9999')));
     app.innerHTML=`<section class="page operational-page">${head('Proyectos','Entregables, fechas y siguiente paso sin ruido administrativo.','<button class="btn primary" data-new="project">+ Proyecto</button>')}
-      <div class="project-board">${(C.db().settings.projectStatuses||[]).map(status=>`<section class="project-column"><h3>${esc(status)} <span>${rows.filter(item=>item.status===status).length}</span></h3>${rows.filter(item=>item.status===status).map(item=>{const done=(item.checklist||[]).filter(row=>row.done).length,total=(item.checklist||[]).length;return`<article class="project-card"><div>${badge(item.status)}<small>${C.date(item.dueDate)}</small></div><h4>${esc(item.name)}</h4><p>${esc(clientName(item.clientId))}</p><div class="progress"><i style="width:${total?done/total*100:Number(item.progress)||0}%"></i></div><small>${done}/${total} tareas · ${esc(item.nextStep||'Sin próximo paso')}</small><div class="row-actions"><button class="btn small" data-project="${item.id}">Ver</button><button class="btn small" data-edit="projects:${item.id}">Editar</button></div></article>`}).join('')||'<p class="column-empty">Sin proyectos</p>'}</section>`).join('')}</div>
+      <div class="project-board">${(C.db().settings.projectStatuses||[]).map(status=>`<section class="project-column"><h3>${esc(status)} <span>${rows.filter(item=>item.status===status).length}</span></h3>${rows.filter(item=>item.status===status).map(item=>{const done=(item.checklist||[]).filter(row=>row.done).length,total=(item.checklist||[]).length;return`<article class="project-card"><div>${badge(item.status)}<small>${C.date(item.dueDate)}</small></div><h4>${esc(item.name)}</h4><p>${esc(clientName(item.clientId))}</p><div class="progress"><i style="width:${total?done/total*100:Number(item.progress)||0}%"></i></div><small>${done}/${total} tareas · ${esc(item.nextStep||'Sin próximo paso')}</small><div class="project-card__actions"><button class="btn small btn-sm" data-project="${item.id}">Ver</button><button class="btn small btn-sm" data-edit="projects:${item.id}">Editar</button><button class="btn small btn-sm" data-expedient="project:${item.id}">Documentos</button><details class="project-more"><summary class="btn small btn-sm">Más acciones</summary><div class="project-more__menu"></div></details></div></article>`}).join('')||'<p class="column-empty">Sin proyectos</p>'}</section>`).join('')}</div>
     </section>`;
   }
 
@@ -140,7 +144,7 @@ window.QuioOperations=(()=>{
     const tabs=[['quio','Datos de Quio'],['packages','Paquetes'],['catalogs','Catálogos'],['financial','Parámetros financieros'],['backup','Respaldo']];
     let body='';
     if(settingsTab==='quio')body=`<form class="panel settings-form" data-settings-form="quio"><div class="form-grid">${field('companyName','Nombre comercial',settings.companyName,'text','required')}${field('legalName','Razón social',settings.legalName)}${field('taxId','RFC',settings.taxId)}${field('quioResponsible','Responsable',settings.quioResponsible)}${field('quioEmail','Correo',settings.quioEmail,'email')}${field('quioPhone','Teléfono',settings.quioPhone,'tel')}${field('quioWebsite','Sitio web',settings.quioWebsite,'url')}${textarea('quioAddress','Dirección',settings.quioAddress)}${textarea('quoteFooter','Pie de cotización',settings.quoteFooter)}</div><div class="dialog-actions"><button class="btn primary">Guardar datos</button></div></form>`;
-    if(settingsTab==='packages')body=`<div class="package-grid">${packages.map(item=>`<article class="panel package-card"><p class="eyebrow">PAQUETE QUIO</p><h3>${esc(item.name)}</h3><strong class="package-price">${C.money(item.price)} MXN</strong><p>${esc(item.description||'')}</p><small>${item.estimatedHours||0} h · ${item.stands||0} stand · ${item.nfcCards||0} NFC</small><button class="btn full-btn" data-edit="packages:${item.id}">Editar</button></article>`).join('')}</div>`;
+    if(settingsTab==='packages')body=`<div class="package-grid">${packages.map(item=>`<article class="panel package-card"><p class="eyebrow">PAQUETE QUIO</p><h3>${esc(item.name)}</h3><strong class="package-price">${C.money(item.price)} MXN</strong><p>${esc(item.description||'')}</p><small>${item.estimatedHours||0} h · ${Number(item.stands||0)+Number(item.nfcCards||0)} NFC</small><button class="btn full-btn" data-edit="packages:${item.id}">Editar</button></article>`).join('')}</div>`;
     if(settingsTab==='catalogs')body=`<form class="panel settings-form" data-settings-form="catalogs"><div class="form-grid">${textarea('clientStatuses','Estados de cliente',(settings.clientStatuses||[]).join('\n'),7)}${textarea('projectStatuses','Estados de proyecto',(settings.projectStatuses||[]).join('\n'),7)}${textarea('incomeCategories','Categorías de ingreso',(settings.incomeCategories||[]).join('\n'),7)}${textarea('expenseCategories','Categorías de gasto',(settings.expenseCategories||[]).join('\n'),7)}${textarea('paymentMethods','Métodos de pago',(settings.paymentMethods||[]).join('\n'),6)}${textarea('followupTypes','Tipos de seguimiento',(settings.followupTypes||[]).join('\n'),6)}</div><div class="dialog-actions"><button class="btn primary">Guardar catálogos</button></div></form>`;
     if(settingsTab==='financial')body=`<form class="panel settings-form" data-settings-form="financial"><div class="form-grid">${field('monthlyGoal','Meta mensual',settings.monthlyGoal,'number','min="0"')}${field('taxRate','IVA predeterminado (%)',settings.taxRate,'number','min="0" step="0.01"')}${field('hourlyTarget','Valor por hora',settings.hourlyTarget,'number','min="0"')}${field('accountantMonthly','Contador mensual',settings.accountantMonthly,'number','min="0"')}${field('chatgptMonthly','ChatGPT mensual',settings.chatgptMonthly,'number','min="0"')}${field('domainMonthly','Dominio mensual',settings.domainMonthly,'number','min="0"')}${field('fixedMonthlyCosts','Costos fijos mensuales',settings.fixedMonthlyCosts,'number','min="0"')}${field('nfcPerClient','NFC por cliente',settings.nfcPerClient,'number','min="0"')}${field('fuelPerClient','Combustible por cliente',settings.fuelPerClient,'number','min="0"')}${field('variablePerClient','Costo variable por cliente',settings.variablePerClient,'number','min="0"')}${field('nfcStock','Stock NFC disponible',settings.nfcStock,'number','min="0"')}</div><div class="dialog-actions"><button class="btn primary">Guardar parámetros</button></div></form>`;
     if(settingsTab==='backup'){const report=C.db().meta?.v10MigrationReport;body=`<div class="dashboard-grid"><article class="panel"><h3>Respaldo e intercambio</h3><p>Exporta una copia completa antes de cambios importantes.</p><div class="toolbar"><button class="btn primary" data-action="backup">Exportar JSON</button><button class="btn" data-action="restore">Restaurar</button><button class="btn" data-action="merge">Fusionar</button><button class="btn" data-action="csv">Exportar CSV</button></div></article><article class="panel"><h3>Migración V10</h3>${report?`<p>Procesada ${C.date(report.ranAt)}.</p><div class="migration-summary"><span>Clientes <b>${report.before.clients} → ${report.after.clients}</b></span><span>Movimientos <b>${report.before.payments+report.before.expenses} → ${report.after.financialMovements}</b></span><span>Seguimientos huérfanos <b>${report.orphanedFollowups}</b></span></div>`:'<p class="muted">Esta base ya inició en el esquema V10.</p>'}<p class="helper">Los datos históricos de tiempo e inventario permanecen en el respaldo y en los proyectos relacionados.</p></article></div>`}
@@ -148,10 +152,10 @@ window.QuioOperations=(()=>{
   }
 
   function formDefinition(kind,record={}){
-    if(kind==='client')return{entity:'clients',kind:'client-unified',title:'Cliente',html:()=>field('name','Nombre de contacto',record.name,'text','required',true)+field('businessName','Nombre del negocio',record.businessName||businessName(record.primaryBusinessId||(record.businessIds||[])[0]),'text','required',true)+field('industry','Giro',record.industry)+field('phone','Teléfono',record.phone,'tel')+field('email','Correo',record.email,'email')+select('preferredContact','Contacto preferido',['WhatsApp','Llamada','Correo','Otro'],record.preferredContact||'WhatsApp')+select('status','Estado',C.db().settings.clientStatuses||[],record.status||'Prospecto')+field('source','Origen',record.source)+field('lastContact','Último contacto',record.lastContact,'date')+field('nextFollowup','Próximo seguimiento',record.nextFollowup,'date')+field('mapsUrl','Google Maps',record.mapsUrl,'url')+field('websiteUrl','Sitio web',record.websiteUrl,'url')+textarea('notes','Notas',record.notes)};
-    if(kind==='followup')return{entity:'followups',kind:'followup',title:'Seguimiento',html:()=>select('clientId','Cliente',options('clients'),record.clientId,'',true)+select('projectId','Proyecto',options('projects'),record.projectId)+field('date','Próxima fecha',record.date||today(),'date','required')+field('reason','Motivo',record.reason,'text','required',true)+select('channel','Canal',C.db().settings.followupTypes||[],record.channel||'WhatsApp')+select('status','Estado',['Pendiente','Realizado'],record.status||'Pendiente')+field('result','Resultado',record.result)+textarea('notes','Notas',record.notes)};
-    if(kind==='project')return{entity:'projects',kind:'project-simple',title:'Proyecto',html:()=>field('name','Nombre del proyecto',record.name,'text','required',true)+select('clientId','Cliente',options('clients'),record.clientId,'',true)+select('quoteId','Cotización',options('quotes','folio'),record.quoteId)+select('packageId','Paquete',options('packages'),record.packageId)+select('status','Estado',C.db().settings.projectStatuses||[],record.status||'Pendiente de iniciar')+field('startDate','Inicio',record.startDate||today(),'date')+field('dueDate','Fecha compromiso',record.dueDate,'date')+field('nextStep','Próximo paso',record.nextStep,'text','',true)+field('googleBusinessUrl','Google Business',record.googleBusinessUrl,'url')+field('websiteUrl','Sitio web',record.websiteUrl,'url')+field('reviewRequestUrl','Enlace para reseñas',record.reviewRequestUrl,'url')+textarea('checklistText','Checklist',(record.checklist||C.db().settings.activityTemplates||[]).map(item=>typeof item==='string'?item:item.text).join('\n'),8)+textarea('notes','Notas',record.notes)};
-    if(kind==='financialMovement')return{entity:'financialMovements',kind:'financial-movement',title:'Movimiento',html:()=>select('movementType','Tipo',['Ingreso','Gasto'],record.movementType||'Ingreso')+field('concept','Concepto',record.concept,'text','required',true)+select('category','Categoría',[...(C.db().settings.incomeCategories||[]),...(C.db().settings.expenseCategories||[])],record.category)+field('amount','Monto',record.amount||0,'number','required min="0.01" step="0.01"')+select('status','Estado',['Pendiente','Parcial','Pagado','Cancelado'],C.normalizeMovementStatus(record.status))+field('paidAmount','Monto pagado',record.paidAmount||0,'number','min="0" step="0.01"')+field('date','Fecha',record.date||today(),'date','required')+field('dueDate','Fecha límite',record.dueDate,'date')+select('paymentMethod','Método',C.db().settings.paymentMethods||[],record.paymentMethod)+select('clientId','Cliente',options('clients'),record.clientId)+select('projectId','Proyecto',options('projects'),record.projectId)+field('reference','Referencia',record.reference)+textarea('notes','Notas',record.notes)};
+    if(kind==='client')return{entity:'clients',kind:'client-unified',title:'Cliente',html:()=>field('name','Nombre de contacto',record.name,'text','required',true)+field('businessName','Nombre del negocio',record.businessName||(record.primaryBusinessId||(record.businessIds||[])[0]?businessName(record.primaryBusinessId||(record.businessIds||[])[0]):''),'text','required',true)+field('industry','Giro',record.industry)+field('phone','Teléfono',record.phone,'tel')+field('email','Correo',record.email,'email')+select('preferredContact','Contacto preferido',['WhatsApp','Llamada','Correo','Otro'],record.preferredContact||'WhatsApp')+select('status','Estado',C.db().settings.clientStatuses||[],record.status||'Prospecto')+field('source','Origen',record.source)+field('lastContact','Último contacto',record.lastContact,'date')+field('nextFollowup','Próximo seguimiento',record.nextFollowup,'date')+field('mapsUrl','Google Maps',record.mapsUrl,'url')+field('websiteUrl','Sitio web',record.websiteUrl,'url')+textarea('notes','Notas',record.notes)};
+    if(kind==='followup')return{entity:'followups',kind:'followup',title:'Seguimiento',html:()=>select('clientId','Cliente',options('clients'),record.clientId,'',true)+select('projectId','Proyecto',options('projects'),record.projectId)+field('contactDate','Fecha de contacto',record.contactDate||today(),'date','required')+field('date','Próxima fecha',record.date||today(),'date','required')+field('reason','Motivo',record.reason,'text','required',true)+select('channel','Canal',C.db().settings.followupTypes||[],record.channel||'WhatsApp')+select('status','Estado',['Pendiente','Realizado'],record.status||'Pendiente')+field('result','Resultado',record.result,'text','',true)+textarea('notes','Notas',record.notes)};
+    if(kind==='project')return{entity:'projects',kind:'project-simple',title:'Proyecto',html:()=>field('name','Nombre del proyecto',record.name,'text','required',true)+select('clientId','Cliente',options('clients'),record.clientId,'',true)+select('quoteId','Cotización',options('quotes','folio'),record.quoteId)+select('packageId','Paquete',options('packages'),record.packageId)+select('status','Estado',C.db().settings.projectStatuses||[],record.status||'Por iniciar')+field('startDate','Inicio',record.startDate||today(),'date')+field('dueDate','Fecha compromiso',record.dueDate,'date')+field('nextStep','Próximo paso',record.nextStep,'text','',true)+field('googleBusinessUrl','Google Business',record.googleBusinessUrl,'url')+field('websiteUrl','Sitio web',record.websiteUrl,'url')+field('reviewRequestUrl','Enlace para reseñas',record.reviewRequestUrl,'url')+textarea('checklistText','Checklist',(record.checklist||C.db().settings.activityTemplates||[]).map(item=>typeof item==='string'?item:item.text).join('\n'),8)+textarea('notes','Notas',record.notes)};
+    if(kind==='financialMovement')return{entity:'financialMovements',kind:'financial-movement',title:'Movimiento',html:()=>select('movementType','Tipo',['Ingreso','Gasto'],record.movementType||'Ingreso')+field('concept','Concepto',record.concept||'Pago de cliente','text','required',true)+select('category','Categoría',[...(C.db().settings.incomeCategories||[]),...(C.db().settings.expenseCategories||[])],record.category)+field('amount','Monto',record.amount||0,'number','required min="0.01" step="0.01"')+select('status','Estado',['Pendiente','Parcial','Pagado','Cancelado'],C.normalizeMovementStatus(record.status))+field('paidAmount','Monto pagado',record.paidAmount||0,'number','min="0" step="0.01"')+field('date','Fecha',record.date||today(),'date','required')+field('dueDate','Fecha límite',record.dueDate,'date')+select('paymentMethod','Método',C.db().settings.paymentMethods||[],record.paymentMethod)+select('clientId','Cliente',options('clients'),record.clientId)+select('projectId','Proyecto',options('projects'),record.projectId)+select('quoteId','Cotización',options('quotes','folio'),record.quoteId)+field('reference','Referencia',record.reference)+textarea('notes','Notas',record.notes)};
     return null;
   }
   function handleForm(kind,data,id){
@@ -167,15 +171,26 @@ window.QuioOperations=(()=>{
       if(data.nextFollowup&&!C.list('followups').some(item=>item.clientId===client.id&&item.date===data.nextFollowup&&item.status==='Pendiente'))C.upsert('followups',{clientId:client.id,date:data.nextFollowup,reason:'Seguimiento general',channel:data.preferredContact||'WhatsApp',status:'Pendiente'},'fol');
       return true;
     }
+    if(kind==='followup'){
+      if(id)data.id=id;
+      const followup=C.upsert('followups',data,'fol');
+      if(data.clientId){
+        C.upsert('clients',{id:data.clientId,lastContact:data.contactDate||today(),nextFollowup:data.date||''});
+        C.recordActivity(id?'Seguimiento actualizado':'Seguimiento registrado','followups',followup,data.result||data.reason);
+      }
+      return true;
+    }
     if(kind==='financial-movement'){
       if(id)data.id=id;
       ['amount','paidAmount'].forEach(key=>data[key]=Number(data[key])||0);
+      if(!id)data.idempotencyKey=data.idempotencyKey||`manual:${data.clientId||'none'}:${data.projectId||'none'}:${data.quoteId||'none'}:${data.amount}:${data.date}:${String(data.reference||data.concept).trim().toLowerCase()}`;
       const movement=C.upsertFinancialMovement(data);
       C.recordActivity(id?'Movimiento actualizado':'Movimiento registrado','financialMovements',movement,`${movement.movementType}: ${C.money(movement.amount)}`);
       return true;
     }
     if(kind==='project-simple'){
       if(id)data.id=id;
+      if(!id&&data.quoteId&&C.list('projects').some(project=>project.quoteId===data.quoteId))throw new Error('Esta cotización ya tiene un proyecto relacionado.');
       const current=id?C.get('projects',id):null;
       const lines=String(data.checklistText||'').split(/\r?\n/).map(value=>value.trim()).filter(Boolean);
       data.checklist=lines.map(text=>({text,done:Boolean((current?.checklist||[]).find(item=>item.text===text)?.done)}));
@@ -184,7 +199,7 @@ window.QuioOperations=(()=>{
       const client=C.clientRecord(data.clientId);data.businessId=client?.businessId||current?.businessId||'';
       const project=C.upsert('projects',data,'prj');
       C.recordActivity(id?'Proyecto actualizado':'Proyecto creado','projects',project,project.name);
-      if(project.clientId)C.upsert('clients',{id:project.clientId,status:['Entregado','Terminado'].includes(project.status)?'Proyecto entregado':'Proyecto en desarrollo'});
+      if(project.clientId)C.upsert('clients',{id:project.clientId,status:['Entregado','Seguimiento','Cerrado'].includes(project.status)?'Proyecto entregado':'Proyecto en desarrollo'});
       return true;
     }
     return false;
@@ -198,19 +213,22 @@ window.QuioOperations=(()=>{
   }
   function bindActions(context){
     const {render,openForm,toast}=context;
-    $('#clientQuery')?.addEventListener('input',event=>{clientQuery=event.target.value;clearTimeout(event.target.timer);event.target.timer=setTimeout(render,180)});
+    $('#clientQuery')?.addEventListener('input',event=>{clientQuery=event.target.value;clearTimeout(event.target.timer);event.target.timer=setTimeout(()=>{const results=$('#clientResults');if(results)results.innerHTML=clientRowsMarkup();$$('[data-client-detail]').forEach(button=>button.onclick=()=>showClient(button.dataset.clientDetail))},180)});
     $('#clientStatus')?.addEventListener('change',event=>{clientStatus=event.target.value;render()});
     $('#clientFollowup')?.addEventListener('change',event=>{clientFollowup=event.target.value;render()});
     $$('[data-client-detail]').forEach(button=>button.onclick=()=>showClient(button.dataset.clientDetail));
-    $$('[data-client-action]').forEach(button=>button.onclick=()=>{
-      const [action,id]=button.dataset.clientAction.split(':'),client=C.clientRecord(id);
+    if(!clientDelegationBound){clientDelegationBound=true;document.addEventListener('click',event=>{
+      const detail=event.target.closest('[data-client-detail]');if(detail){showClient(detail.dataset.clientDetail);return}
+      const button=event.target.closest('[data-client-action]');if(!button)return;
+      const [action,id]=button.dataset.clientAction.split(':'),client=C.clientRecord(id);if(!client)return;
+      if(action==='whatsapp'){const digits=String(client.whatsapp||client.phone||'').replace(/\D/g,'');if(!digits){toast('Este cliente no tiene teléfono para WhatsApp.');return}const international=digits.startsWith('52')?digits:`52${digits.slice(-10)}`;window.open(`https://wa.me/${international}`,'_blank','noopener');return}
       $('#recordDialog').close();
       if(action==='edit')openForm('client',client);
-      if(action==='followup')openForm('followup',{clientId:id});
+      if(action==='followup')openForm('followup',{clientId:id,contactDate:today(),date:client.nextFollowup||today()});
       if(action==='quote')openForm('quote',{clientId:id,businessId:client.businessId,status:'Borrador'});
-      if(action==='project')openForm('project',{clientId:id,businessId:client.businessId,status:'Pendiente de iniciar'});
+      if(action==='project')openForm('project',{clientId:id,businessId:client.businessId,status:'Por iniciar'});
       if(action==='payment')openForm('financialMovement',{clientId:id,movementType:'Ingreso',status:'Pagado'});
-    });
+    })}
     $$('[data-finance-tab]').forEach(button=>button.onclick=()=>{financeTab=button.dataset.financeTab;render()});
     $$('[data-settings-tab]').forEach(button=>button.onclick=()=>{settingsTab=button.dataset.settingsTab;render()});
     $$('[data-settings-form]').forEach(form=>form.onsubmit=event=>{event.preventDefault();saveSettings(form);toast('Configuración guardada.');render()});
