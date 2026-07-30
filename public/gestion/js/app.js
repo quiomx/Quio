@@ -5,7 +5,12 @@ const val=(o,k,d='—')=>esc(o?.[k]||d),biz=id=>C.get('businesses',id),client=id
 const badge=(text,tone='')=>`<span class="badge ${tone}">${esc(text||'Sin estado')}</span>`;
 const marginBadge=margin=>{const s=C.marginSignal(margin);return`<span class="margin-signal ${s.tone}"><b aria-hidden="true">${s.icon}</b><span><strong>${Number(margin).toFixed(1)}%</strong><small>${s.label}</small></span></span>`};
 const empty=(title='Aún no hay datos suficientes.',text='Crea el primer registro para comenzar.')=>`<div class="empty"><strong>${title}</strong><span>${text}</span></div>`;
-function toast(message){const el=$('#toast');el.textContent=message;el.classList.add('show');clearTimeout(el.t);el.t=setTimeout(()=>el.classList.remove('show'),2800)}
+function toast(message){
+  const el=$('#toast'),openDialogs=$$('dialog[open]'),host=openDialogs.at(-1)||document.body;
+  host.appendChild(el);
+  el.textContent=message;el.classList.add('show');clearTimeout(el.t);
+  el.t=setTimeout(()=>el.classList.remove('show'),Math.max(2800,Math.min(6500,String(message).length*55)));
+}
 function pageHead(title,desc,actions=''){return `<div class="page-head"><div><h2>${title}</h2><p>${desc}</p></div><div class="toolbar no-print">${actions}</div></div>`}
 function metric(label,value,note='',cls=''){return `<article class="metric ${cls}"><span>${label}</span><strong>${value}</strong>${note?`<small>${note}</small>`:''}</article>`}
 function active(items){return items.filter(x=>!x.archived)}

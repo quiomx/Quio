@@ -77,6 +77,30 @@ test("ships safe client and project deletion plus financial autosave", async () 
   assert.match(operations, /quio:financial-settings-updated/);
 });
 
+test("preserves administrative history when projects and quotes have activity", async () => {
+  const [operations, documents] = await Promise.all([
+    readFile(new URL("../public/gestion/js/operations.js", import.meta.url), "utf8"),
+    readFile(new URL("../public/gestion/js/documents.js", import.meta.url), "utf8"),
+  ]);
+  assert.match(operations, /Proyecto cancelado y archivado/);
+  assert.match(operations, /cancellationReason:reason\.trim\(\)/);
+  assert.match(operations, /C\.archive\('documents',document\.id\)/);
+  assert.match(operations, /C\.archive\('projects',project\.id\)/);
+  assert.match(documents, /C\.list\('projects',\{includeArchived:true\}\)/);
+  assert.match(documents, /Cotización cancelada y archivada/);
+  assert.match(documents, /C\.archive\('quotes',quote\.id\)/);
+});
+
+test("keeps toast notifications visible above an open modal", async () => {
+  const [app, styles] = await Promise.all([
+    readFile(new URL("../public/gestion/js/app.js", import.meta.url), "utf8"),
+    readFile(new URL("../public/gestion/styles.css", import.meta.url), "utf8"),
+  ]);
+  assert.match(app, /openDialogs=\$\$\('dialog\[open\]'\)/);
+  assert.match(app, /host\.appendChild\(el\)/);
+  assert.match(styles, /dialog #toast\{position:absolute/);
+});
+
 test("ships focused search, delegated client actions, safe quote deletion and compact projects", async () => {
   const [html, app, operations, documents, styles] = await Promise.all([
     readFile(new URL("../public/gestion/index.html", import.meta.url), "utf8"),
@@ -90,7 +114,7 @@ test("ships focused search, delegated client actions, safe quote deletion and co
   assert.match(operations, /results\.innerHTML=clientRowsMarkup\(\)/);
   assert.match(operations, /document\.addEventListener\('click'/);
   assert.match(documents, /data-delete-quote/);
-  assert.match(documents, /Cotización vinculada a un proyecto/);
+  assert.match(documents, /Cancelar y archivar cotización/);
   assert.match(styles, /\.project-card__actions\{display:flex;flex-wrap:wrap/);
   assert.match(styles, /\.investment-block/);
 });
