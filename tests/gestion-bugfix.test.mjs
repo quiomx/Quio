@@ -68,6 +68,15 @@ test("deletes an unlinked quote and preserves related data APIs", async () => {
   assert.equal(core.get("quotes", quote.id), undefined);
 });
 
+test("ships safe client and project deletion plus financial autosave", async () => {
+  const operations = await readFile(new URL("../public/gestion/js/operations.js", import.meta.url), "utf8");
+  assert.match(operations, /data-client-action="delete:/);
+  assert.match(operations, /data-delete-project=/);
+  assert.match(operations, /No se puede eliminar: tiene/);
+  assert.match(operations, /data-financial-save-status/);
+  assert.match(operations, /quio:financial-settings-updated/);
+});
+
 test("ships focused search, delegated client actions, safe quote deletion and compact projects", async () => {
   const [html, app, operations, documents, styles] = await Promise.all([
     readFile(new URL("../public/gestion/index.html", import.meta.url), "utf8"),
