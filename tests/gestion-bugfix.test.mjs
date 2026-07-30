@@ -77,6 +77,16 @@ test("ships safe client and project deletion plus financial autosave", async () 
   assert.match(operations, /quio:financial-settings-updated/);
 });
 
+test("keeps toast notifications visible above an open modal", async () => {
+  const [app, styles] = await Promise.all([
+    readFile(new URL("../public/gestion/js/app.js", import.meta.url), "utf8"),
+    readFile(new URL("../public/gestion/styles.css", import.meta.url), "utf8"),
+  ]);
+  assert.match(app, /openDialogs=\$\$\('dialog\[open\]'\)/);
+  assert.match(app, /host\.appendChild\(el\)/);
+  assert.match(styles, /dialog #toast\{position:absolute/);
+});
+
 test("ships focused search, delegated client actions, safe quote deletion and compact projects", async () => {
   const [html, app, operations, documents, styles] = await Promise.all([
     readFile(new URL("../public/gestion/index.html", import.meta.url), "utf8"),
