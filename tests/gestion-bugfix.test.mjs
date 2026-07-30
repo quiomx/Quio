@@ -101,6 +101,19 @@ test("keeps toast notifications visible above an open modal", async () => {
   assert.match(styles, /dialog #toast\{position:absolute/);
 });
 
+test("offers a protected operational reset that preserves configuration", async () => {
+  const [app, operations] = await Promise.all([
+    readFile(new URL("../public/gestion/js/app.js", import.meta.url), "utf8"),
+    readFile(new URL("../public/gestion/js/operations.js", import.meta.url), "utf8"),
+  ]);
+  assert.match(operations, /data-action="clear-operational"/);
+  assert.match(app, /ELIMINAR PRUEBAS/);
+  assert.match(app, /next\.settings=structuredClone\(current\.settings\)/);
+  assert.match(app, /next\.packages=structuredClone\(current\.packages\)/);
+  assert.match(app, /next\.services=structuredClone\(current\.services\)/);
+  assert.match(app, /next\.inventoryProducts=structuredClone\(current\.inventoryProducts\)/);
+});
+
 test("ships focused search, delegated client actions, safe quote deletion and compact projects", async () => {
   const [html, app, operations, documents, styles] = await Promise.all([
     readFile(new URL("../public/gestion/index.html", import.meta.url), "utf8"),
