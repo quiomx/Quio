@@ -77,6 +77,16 @@ test("ships safe client and project deletion plus financial autosave", async () 
   assert.match(operations, /quio:financial-settings-updated/);
 });
 
+test("deletes project documents without creating a quote-project deadlock", async () => {
+  const [operations, documents] = await Promise.all([
+    readFile(new URL("../public/gestion/js/operations.js", import.meta.url), "utf8"),
+    readFile(new URL("../public/gestion/js/documents.js", import.meta.url), "utf8"),
+  ]);
+  assert.match(operations, /documents\.forEach\(document=>C\.remove\('documents',document\.id\)\)/);
+  assert.match(operations, /después podrá eliminarse por separado/);
+  assert.match(documents, /elimina primero el proyecto desde Proyectos/);
+});
+
 test("keeps toast notifications visible above an open modal", async () => {
   const [app, styles] = await Promise.all([
     readFile(new URL("../public/gestion/js/app.js", import.meta.url), "utf8"),

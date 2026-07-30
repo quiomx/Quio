@@ -240,9 +240,11 @@ window.QuioOperations=(()=>{
     $$('[data-settings-form]').forEach(form=>form.onsubmit=event=>{event.preventDefault();saveSettings(form);toast('Configuración guardada.');render()});
     $$('[data-delete-project]').forEach(button=>button.onclick=()=>{
       const project=C.get('projects',button.dataset.deleteProject);if(!project)return;
-      const links=[['documents','documentos'],['financialMovements','movimientos financieros'],['timeEntries','registros de tiempo'],['inventoryMovements','movimientos de inventario']].map(([entity,label])=>[C.list(entity).filter(item=>item.projectId===project.id).length,label]).filter(([count])=>count);
-      if(links.length){toast(`No se puede eliminar: tiene ${links.map(([count,label])=>`${count} ${label}`).join(', ')}.`);return}
-      confirmAction('Eliminar proyecto',`Se eliminará “${project.name}”. La cotización relacionada se conservará.`,()=>{C.remove('projects',project.id);C.recordActivity('Proyecto eliminado','projects',project,project.name);toast('Proyecto eliminado correctamente.');render()});
+      const documents=C.list('documents').filter(item=>item.projectId===project.id);
+      const blockers=[['financialMovements','movimientos financieros'],['timeEntries','registros de tiempo'],['inventoryMovements','movimientos de inventario']].map(([entity,label])=>[C.list(entity).filter(item=>item.projectId===project.id).length,label]).filter(([count])=>count);
+      if(blockers.length){toast(`No se puede eliminar: tiene ${blockers.map(([count,label])=>`${count} ${label}`).join(', ')}.`);return}
+      const documentNotice=documents.length?` También se eliminarán ${documents.length} ${documents.length===1?'documento operativo relacionado':'documentos operativos relacionados'}.`:'';
+      confirmAction('Eliminar proyecto',`Se eliminará “${project.name}”.${documentNotice} La cotización relacionada se conservará y después podrá eliminarse por separado.`,()=>{documents.forEach(document=>C.remove('documents',document.id));C.remove('projects',project.id);C.recordActivity('Proyecto eliminado','projects',project,`${project.name}${documents.length?` · ${documents.length} documento(s) eliminado(s)`:''}`);toast('Proyecto eliminado correctamente. Ya puedes eliminar la cotización relacionada.');render()});
     });
     const financialForm=$('[data-settings-form="financial"]');
     if(financialForm){

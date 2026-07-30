@@ -742,7 +742,7 @@ window.QuioDocuments=(()=>{
       const quote=C.get('quotes',button.dataset.deleteQuote);if(!quote)return;
       const client=C.clientRecord(quote.clientId),project=C.list('projects').find(item=>item.quoteId===quote.id);
       if($('#recordDialog').open)$('#recordDialog').close();
-      if(project){confirmAction('Cotización vinculada a un proyecto',`${quote.folio} · ${client?.name||'Sin cliente'} está relacionada con “${project.name}”. Para conservar la integridad, confirma para cancelar la cotización sin eliminarla.`,()=>{setQuoteStatus(quote.id,'Cancelada');toast('Cotización cancelada; el proyecto conserva su relación.');render()});return}
+      if(project){confirmAction('Cotización vinculada a un proyecto',`${quote.folio} · ${client?.name||'Sin cliente'} está relacionada con “${project.name}”. Para eliminarla definitivamente, elimina primero el proyecto desde Proyectos. Si solo deseas anular la cotización y conservar el proyecto, confirma para marcarla como cancelada.`,()=>{setQuoteStatus(quote.id,'Cancelada');toast('Cotización cancelada; el proyecto conserva su relación.');render()});return}
       confirmAction('Eliminar cotización',`Se eliminará ${quote.folio} de ${client?.name||'Sin cliente'}. Esta acción no se puede deshacer.`,()=>{C.remove('quotes',quote.id);C.recordActivity('Cotización eliminada','quotes',quote,`${quote.folio} · ${client?.name||'Sin cliente'}`);toast('Cotización eliminada correctamente.');render()});
     });
     $$('[data-order-from-quote]').forEach(button=>button.onclick=()=>{const doc=createDocument('serviceOrder',{quotationId:button.dataset.orderFromQuote});openDocumentForm(doc)});
