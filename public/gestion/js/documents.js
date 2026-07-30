@@ -740,9 +740,13 @@ window.QuioDocuments=(()=>{
     $$('[data-quote-duplicate]').forEach(button=>button.onclick=()=>{duplicateQuote(button.dataset.quoteDuplicate);toast('Cotización duplicada como borrador.');render()});
     $$('[data-delete-quote]').forEach(button=>button.onclick=()=>{
       const quote=C.get('quotes',button.dataset.deleteQuote);if(!quote)return;
-      const client=C.clientRecord(quote.clientId),project=C.list('projects').find(item=>item.quoteId===quote.id);
+      const client=C.clientRecord(quote.clientId),project=C.list('projects',{includeArchived:true}).find(item=>item.quoteId===quote.id);
+      const relatedDocuments=C.list('documents',{includeArchived:true}).filter(item=>item.quotationId===quote.id);
       if($('#recordDialog').open)$('#recordDialog').close();
-      if(project){confirmAction('Cotización vinculada a un proyecto',`${quote.folio} · ${client?.name||'Sin cliente'} está relacionada con “${project.name}”. Para eliminarla definitivamente, elimina primero el proyecto desde Proyectos. Si solo deseas anular la cotización y conservar el proyecto, confirma para marcarla como cancelada.`,()=>{setQuoteStatus(quote.id,'Cancelada');toast('Cotización cancelada; el proyecto conserva su relación.');render()});return}
+      if(project||relatedDocuments.length||quote.status!=='Borrador'){
+        const reason=prompt('Motivo administrativo para cancelar y archivar la cotización:','Operación no realizada');if(!reason?.trim()){toast('Es necesario registrar un motivo para conservar la trazabilidad.');return}
+        const relation=project?`Está relacionada con el proyecto “${project.name}”${project.archived?' archivado':''}.`:relatedDocuments.length?`Tiene ${relatedDocuments.length} documento(s) relacionado(s).`:'Ya salió del estado borrador.';
+        confirmAction('Cancelar y archivar cotización',`${quote.folio} · ${client?.name||'Sin cliente'}. ${relation} Se conservará en el historial y no afectará registros contables.`,()=>{setQuoteStatus(quote.id,'Cancelada');C.upsert('quotes',{id:quote.id,cancellationReason:reason.trim(),cancelledAt:C.now()});C.archive('quotes',quote.id);C.recordActivity('Cotización cancelada y archivada','quotes',quote,`${quote.folio} · Motivo: ${reason.trim()}`);toast('Cotización cancelada y archivada; se conservó su historial.');render()});return}
       confirmAction('Eliminar cotización',`Se eliminará ${quote.folio} de ${client?.name||'Sin cliente'}. Esta acción no se puede deshacer.`,()=>{C.remove('quotes',quote.id);C.recordActivity('Cotización eliminada','quotes',quote,`${quote.folio} · ${client?.name||'Sin cliente'}`);toast('Cotización eliminada correctamente.');render()});
     });
     $$('[data-order-from-quote]').forEach(button=>button.onclick=()=>{const doc=createDocument('serviceOrder',{quotationId:button.dataset.orderFromQuote});openDocumentForm(doc)});

@@ -224,7 +224,7 @@ window.QuioOperations=(()=>{
       const [action,id]=button.dataset.clientAction.split(':'),client=C.clientRecord(id);if(!client)return;
       if(action==='whatsapp'){const digits=String(client.whatsapp||client.phone||'').replace(/\D/g,'');if(!digits){toast('Este cliente no tiene teléfono para WhatsApp.');return}const international=digits.startsWith('52')?digits:`52${digits.slice(-10)}`;window.open(`https://wa.me/${international}`,'_blank','noopener');return}
       if(action==='delete'){
-        const links=[['quotes','cotizaciones'],['projects','proyectos'],['followups','seguimientos'],['financialMovements','movimientos financieros']].map(([entity,label])=>[C.list(entity).filter(item=>item.clientId===id).length,label]).filter(([count])=>count);
+        const links=[['quotes','cotizaciones'],['projects','proyectos'],['followups','seguimientos'],['financialMovements','movimientos financieros']].map(([entity,label])=>[C.list(entity,{includeArchived:true}).filter(item=>item.clientId===id).length,label]).filter(([count])=>count);
         if(links.length){toast(`No se puede eliminar: tiene ${links.map(([count,label])=>`${count} ${label}`).join(', ')}.`);return}
         confirmAction('Eliminar cliente',`Se eliminará ${client.name}. Esta acción no se puede deshacer.`,()=>{C.remove('clients',id);C.recordActivity('Cliente eliminado','clients',client,client.name);$('#recordDialog').close();toast('Cliente eliminado correctamente.');render()});return;
       }
@@ -240,11 +240,14 @@ window.QuioOperations=(()=>{
     $$('[data-settings-form]').forEach(form=>form.onsubmit=event=>{event.preventDefault();saveSettings(form);toast('Configuración guardada.');render()});
     $$('[data-delete-project]').forEach(button=>button.onclick=()=>{
       const project=C.get('projects',button.dataset.deleteProject);if(!project)return;
-      const documents=C.list('documents').filter(item=>item.projectId===project.id);
-      const blockers=[['financialMovements','movimientos financieros'],['timeEntries','registros de tiempo'],['inventoryMovements','movimientos de inventario']].map(([entity,label])=>[C.list(entity).filter(item=>item.projectId===project.id).length,label]).filter(([count])=>count);
-      if(blockers.length){toast(`No se puede eliminar: tiene ${blockers.map(([count,label])=>`${count} ${label}`).join(', ')}.`);return}
-      const documentNotice=documents.length?` También se eliminarán ${documents.length} ${documents.length===1?'documento operativo relacionado':'documentos operativos relacionados'}.`:'';
-      confirmAction('Eliminar proyecto',`Se eliminará “${project.name}”.${documentNotice} La cotización relacionada se conservará y después podrá eliminarse por separado.`,()=>{documents.forEach(document=>C.remove('documents',document.id));C.remove('projects',project.id);C.recordActivity('Proyecto eliminado','projects',project,`${project.name}${documents.length?` · ${documents.length} documento(s) eliminado(s)`:''}`);toast('Proyecto eliminado correctamente. Ya puedes eliminar la cotización relacionada.');render()});
+      const documents=C.list('documents',{includeArchived:true}).filter(item=>item.projectId===project.id);
+      const relations=[['financialMovements','movimientos financieros'],['timeEntries','registros de tiempo'],['inventoryMovements','movimientos de inventario']].map(([entity,label])=>[C.list(entity,{includeArchived:true}).filter(item=>item.projectId===project.id).length,label]).filter(([count])=>count);
+      const hasProgress=Number(project.progress)>0||(project.checklist||[]).some(item=>item.done);
+      const canDelete=!documents.length&&!relations.length&&!hasProgress&&['Por iniciar','Cancelado'].includes(project.status);
+      if(canDelete){confirmAction('Eliminar proyecto vacío',`Se eliminará definitivamente “${project.name}”. No tiene actividad ni documentos relacionados. La cotización se conservará.`,()=>{C.remove('projects',project.id);C.recordActivity('Proyecto vacío eliminado','projects',project,project.name);toast('Proyecto vacío eliminado correctamente.');render()});return}
+      const reason=prompt('Motivo administrativo para cancelar y archivar el proyecto:','Proyecto creado por error');if(!reason?.trim()){toast('Es necesario registrar un motivo para conservar la trazabilidad.');return}
+      const relationDetail=[documents.length&&`${documents.length} documento(s)`,...relations.map(([count,label])=>`${count} ${label}`)].filter(Boolean).join(', ');
+      confirmAction('Cancelar y archivar proyecto',`“${project.name}” y sus documentos se conservarán en el historial como cancelados. Registros relacionados: ${relationDetail||'avance operativo'}.`,()=>{documents.forEach(document=>{C.upsert('documents',{id:document.id,status:/a$/.test(document.status||'')?'Cancelada':'Cancelado',cancellationReason:reason.trim()});C.archive('documents',document.id)});C.upsert('projects',{id:project.id,status:'Cancelado',cancellationReason:reason.trim(),cancelledAt:C.now()});C.archive('projects',project.id);C.recordActivity('Proyecto cancelado y archivado','projects',project,`${project.name} · Motivo: ${reason.trim()}`);toast('Proyecto cancelado y archivado; se conservó su historial.');render()});
     });
     const financialForm=$('[data-settings-form="financial"]');
     if(financialForm){
