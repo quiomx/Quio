@@ -107,7 +107,7 @@ test("offers a protected operational reset that preserves configuration", async 
     readFile(new URL("../public/gestion/js/operations.js", import.meta.url), "utf8"),
   ]);
   assert.match(operations, /data-action="clear-operational"/);
-  assert.match(app, /ELIMINAR PRUEBAS/);
+  assert.match(app, /Esta acción no se puede deshacer desde la interfaz/);
   assert.match(app, /next\.settings=structuredClone\(current\.settings\)/);
   assert.match(app, /next\.packages=structuredClone\(current\.packages\)/);
   assert.match(app, /next\.services=structuredClone\(current\.services\)/);
