@@ -1,1 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="15" fill="#201c2f"/><path d="M28 28h8v23h-8z" fill="#fff"/><circle cx="32" cy="18" r="5" fill="#7955e8"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Quio">
+  <rect width="64" height="64" rx="14" fill="#201c2f"/>
+  <path d="M1190 -418V1118H846V926H834C792 1027 696 1132 517 1132C282 1132 72 950 72 558C72 179 271 -16 520 -16C690 -16 790 80 834 181H842V-418ZM639 256C504 256 431 376 431 558C431 740 504 859 639 859C772 859 850 743 850 558C850 375 771 256 639 256Z" transform="translate(12.06 43.7712) scale(.0316 -.0316)" fill="#ffffff" fill-rule="evenodd"/>
+</svg>

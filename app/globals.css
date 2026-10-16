@@ -36,8 +36,9 @@
 .q-button svg,.q-navcta svg,.q-inline-action svg{transition:transform .24s var(--q-ease)!important}
 .q-button:hover svg,.q-navcta:hover svg,.q-inline-action:hover svg{transform:translate(2px,-2px)}
 /* Reveal is progressive: content stays visible if JavaScript is unavailable. */
-html.q-motion-ready [data-reveal]{opacity:0;transform:translateY(15px);transition:opacity .62s ease,transform .72s var(--q-ease)}
-html.q-motion-ready [data-reveal].q-revealed{opacity:1;transform:none}
+/* Meaningful scroll entrances: visible movement, still calm and deliberate. */
+html.q-motion-ready [data-reveal]{opacity:0;transform:translate3d(0,54px,0);transition:opacity .82s cubic-bezier(.22,.61,.36,1),transform .9s cubic-bezier(.16,1,.3,1)}
+html.q-motion-ready [data-reveal].q-revealed{opacity:1;transform:translate3d(0,0,0)}
 .q-manifesto span::after{transition:transform .8s var(--q-ease)!important}
 .q-faq-items details[open] p{animation:none!important}
 /* Browser preview: each iframe is a genuinely separate, responsive site. */
@@ -135,4 +136,21 @@ html.q-motion-ready [data-reveal].q-revealed{opacity:1;transform:none}
  html.q-motion-ready [data-reveal]{opacity:1;transform:none;transition:none}
  html.q-motion-ready [data-reveal].q-revealed{opacity:1;transform:none}
  .q-hero .q-hero-copy,.q-hero .q-showcase,.q-manifesto.q-inview span{animation:none!important}
+}
+
+
+/* Quio V3.8 — expressive but controlled scroll motion + prominent header identity. */
+/* Scaled typography retains the same exact font, spacing, and natural violet i-dot. */
+.q-header .q-wordmark{font-size:56px;line-height:1;flex-shrink:0}
+@media(max-width:600px){.q-header .q-wordmark{font-size:44px}}
+@media(max-width:370px){.q-header .q-wordmark{font-size:40px}}
+@media(prefers-reduced-motion:no-preference){
+  /* The full-bleed banner stays in place; its words arrive after it enters view. */
+  .q-manifesto-inner p,.q-manifesto-inner span{opacity:0;transform:translate3d(0,30px,0);transition:opacity .7s ease,transform .88s cubic-bezier(.16,1,.3,1)}
+  .q-manifesto.q-inview .q-manifesto-inner p,.q-manifesto.q-inview .q-manifesto-inner span{opacity:1;transform:none}
+  .q-manifesto.q-inview .q-manifesto-inner span{transition-delay:.15s;animation:none}
+}
+@media(prefers-reduced-motion:reduce){
+  html.q-motion-ready [data-reveal],html.q-motion-ready [data-reveal].q-revealed{opacity:1;transform:none;transition:none}
+  .q-manifesto-inner p,.q-manifesto-inner span{opacity:1;transform:none;transition:none}
 }

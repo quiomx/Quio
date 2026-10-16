@@ -61,6 +61,8 @@
  // Quiet section entrances. JavaScript is additive: no hidden content if unavailable.
  const reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
  if(!reduceMotion&&'IntersectionObserver' in window){
+  // Editorial origin is part of the reading journey, even though it has no static data-reveal attribute.
+  document.querySelector('.q-origin-section')?.setAttribute('data-reveal','');
   const items=[...document.querySelectorAll('[data-reveal]')];
   if(items.length){
    document.documentElement.classList.add('q-motion-ready');
@@ -70,7 +72,7 @@
      entry.target.classList.add('q-revealed');
      revealObserver.unobserve(entry.target);
     }
-   },{threshold:.08,rootMargin:'0px 0px -6% 0px'});
+   },{threshold:0,rootMargin:'0px 0px -16% 0px'});
    for(const item of items)revealObserver.observe(item);
   }
  }
