@@ -27,15 +27,17 @@
 .q-hero h1 .q-headline-accent{color:var(--q-lilac)}
 .q-headline-line>span{color:inherit!important}
 .q-hero.q-enter .q-headline-line>span{animation:none!important}
-.q-hero.q-enter .q-hero-copy{animation:none!important}
-.q-hero.q-enter .q-showcase{animation:none!important}
+
+
 .q-button::before,.q-navcta::before{content:none!important}
 .q-button:hover,.q-navcta:hover,.q-price-item:hover,.q-service:hover{transform:none!important}
 .q-button,.q-navcta,.q-price-item,.q-inline-action,.q-navlinks a{transition:background-color .22s ease,color .22s ease,border-color .22s ease,box-shadow .22s ease!important}
 .q-button:hover,.q-navcta:hover{box-shadow:0 9px 22px rgba(30,25,50,.13)!important}
 .q-button svg,.q-navcta svg,.q-inline-action svg{transition:transform .24s var(--q-ease)!important}
 .q-button:hover svg,.q-navcta:hover svg,.q-inline-action:hover svg{transform:translate(2px,-2px)}
-.q-motion-ready [data-reveal]{opacity:1!important;transform:none!important;transition:none!important}
+/* Reveal is progressive: content stays visible if JavaScript is unavailable. */
+html.q-motion-ready [data-reveal]{opacity:0;transform:translateY(15px);transition:opacity .62s ease,transform .72s var(--q-ease)}
+html.q-motion-ready [data-reveal].q-revealed{opacity:1;transform:none}
 .q-manifesto span::after{transition:transform .8s var(--q-ease)!important}
 .q-faq-items details[open] p{animation:none!important}
 /* Browser preview: each iframe is a genuinely separate, responsive site. */
@@ -112,3 +114,25 @@
 .q-origin p em{font-style:italic;color:var(--q-ink);font-weight:600}
 @media(max-width:850px){.q-origin{grid-template-columns:1fr;align-items:start;gap:24px}.q-origin p{max-width:63ch}}
 @media(max-width:600px){.q-faq{padding-bottom:65px}.q-origin-section{padding:0 0 95px}.q-origin{padding-bottom:0;margin-bottom:0;gap:18px}.q-origin h2{font-size:clamp(32px,9vw,42px)}.q-origin p{font-size:14px;line-height:1.7}}
+
+
+/* Quio V3.6 — Apple-like motion restored, without decorative bouncing or rotations. */
+@keyframes q-soft-appear{
+ from{opacity:0;transform:translate3d(0,15px,0)}
+ to{opacity:1;transform:translate3d(0,0,0)}
+}
+@media(prefers-reduced-motion:no-preference){
+ /* A single gentle entrance when the document loads; does not repeat on scroll. */
+ .q-hero .q-hero-copy{animation:q-soft-appear .66s .04s var(--q-ease) both}
+ .q-hero .q-showcase{animation:q-soft-appear .76s .13s var(--q-ease) both}
+ /* Interactive concept previews crossfade instead of snapping. */
+ .q-demo-preview{transition:opacity .24s ease!important}
+ .q-demo-preview.is-switching{opacity:.16!important}
+ /* Small typography accent on the manifesto, activated only once in view. */
+ .q-manifesto.q-inview span{animation:q-soft-appear .58s var(--q-ease) both}
+}
+@media(prefers-reduced-motion:reduce){
+ html.q-motion-ready [data-reveal]{opacity:1;transform:none;transition:none}
+ html.q-motion-ready [data-reveal].q-revealed{opacity:1;transform:none}
+ .q-hero .q-hero-copy,.q-hero .q-showcase,.q-manifesto.q-inview span{animation:none!important}
+}

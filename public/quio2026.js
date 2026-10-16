@@ -35,11 +35,15 @@
    loaded.src=newSrc;
    try {await loaded.decode();} catch {return;}
    if(version!==sequence)return;
-   if(!reduced)preview.classList.add('is-switching');
-   if(!reduced)await new Promise(resolve=>setTimeout(resolve,115));
-   if(version!==sequence)return;
+   if(!reduced){
+    preview.classList.add('is-switching');
+    await new Promise(resolve=>setTimeout(resolve,175));
+   }
+   if(version!==sequence){preview.classList.remove('is-switching');return;}
    preview.src=newSrc;
-   preview.classList.remove('is-switching');
+   if(reduced){preview.classList.remove('is-switching');}
+   else {requestAnimationFrame(()=>requestAnimationFrame(()=>preview.classList.remove('is-switching')));}
+
   };
   views.forEach(btn=>btn.addEventListener('click',()=>{
    if(showcase.dataset.view===btn.dataset.view)return;
@@ -53,6 +57,22 @@
    concepts.forEach(item=>{const active=item===btn;item.classList.toggle('is-active',active);item.setAttribute('aria-pressed',String(active));});
    render();
   }));
+ }
+ // Quiet section entrances. JavaScript is additive: no hidden content if unavailable.
+ const reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+ if(!reduceMotion&&'IntersectionObserver' in window){
+  const items=[...document.querySelectorAll('[data-reveal]')];
+  if(items.length){
+   document.documentElement.classList.add('q-motion-ready');
+   const revealObserver=new IntersectionObserver(entries=>{
+    for(const entry of entries){
+     if(!entry.isIntersecting)continue;
+     entry.target.classList.add('q-revealed');
+     revealObserver.unobserve(entry.target);
+    }
+   },{threshold:.08,rootMargin:'0px 0px -6% 0px'});
+   for(const item of items)revealObserver.observe(item);
+  }
  }
  const header=document.querySelector('.q-header');
  const contact=document.querySelector('.q-mobile-contact');
