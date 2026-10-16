@@ -5,7 +5,7 @@ import path from "node:path";
 const root = process.cwd();
 const output = path.join(root, "out-gh-pages");
 const port = 4178;
-const basePath = "/Quio/";
+const basePath = "./"; // Works both at /Quio/ and at a custom-domain root.
 
 if (path.basename(output) !== "out-gh-pages" || !output.startsWith(root)) {
   throw new Error("Invalid GitHub Pages output directory.");
@@ -42,6 +42,6 @@ try {
   await writeFile(path.join(output, "404.html"), html, "utf8");
   await writeFile(path.join(output, ".nojekyll"), "", "utf8");
   const written = await readFile(path.join(output, "index.html"), "utf8");
-  if (!written.includes(`${basePath}assets/`) || written.includes('="/assets/')) throw new Error("GitHub Pages asset paths were not rewritten correctly.");
+  if (!written.includes(`${basePath}assets/`) || written.includes('="/assets/') || written.includes('="/Quio/assets/')) throw new Error("GitHub Pages asset paths were not rewritten correctly.");
 } finally { server.kill(); }
 console.log(`GitHub Pages export created at ${output}`);
